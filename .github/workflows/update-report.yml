@@ -1,0 +1,32 @@
+name: Update Finance Report
+
+on:
+  schedule:
+    - cron: '55 7 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 yfinance
+      
+      - name: Update report
+        run: python update_report.py
+      
+      - name: Commit and push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add index.html
+          git commit -m "Update Finance Report - $(date)" || true
+          git push
