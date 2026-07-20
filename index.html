@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Täglicher Finanzreport</title>
+    <title>Finance Daily Report</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -12,20 +12,15 @@
             color: #fff;
             min-height: 100vh;
         }
-        
         .container { max-width: 600px; margin: 0 auto; }
-        
-        /* TAB NAVIGATION */
         .tab-navigation {
             display: flex;
-            gap: 0;
             background: rgba(0,0,0,0.3);
             border-bottom: 2px solid rgba(255,255,255,0.1);
             position: sticky;
             top: 0;
             z-index: 100;
         }
-        
         .tab-btn {
             flex: 1;
             padding: 12px 10px;
@@ -39,53 +34,33 @@
             transition: all 0.3s ease;
             text-align: center;
         }
-        
-        .tab-btn:hover {
-            color: #fff;
-            background: rgba(255,255,255,0.05);
-        }
-        
         .tab-btn.active {
             color: #10b981;
             border-bottom-color: #10b981;
             background: rgba(16,185,129,0.1);
         }
-        
-        /* TAB CONTENT */
         .tab-content {
             display: none;
             padding: 12px;
-            animation: fadeIn 0.3s ease;
         }
-        
         .tab-content.active {
             display: block;
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
         .header {
             background: rgba(255,255,255,0.05);
             border-radius: 12px;
             padding: 16px;
             margin-bottom: 16px;
             border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
         }
-        
         .header h1 { font-size: 24px; margin-bottom: 8px; }
         .header .date { font-size: 12px; color: #aaa; }
-        
         .market-overview {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-top: 12px;
         }
-        
         .index-card {
             background: rgba(255,255,255,0.08);
             padding: 10px;
@@ -93,17 +68,12 @@
             font-size: 13px;
             border-left: 3px solid;
         }
-        
         .index-card.positive { border-color: #10b981; }
         .index-card.negative { border-color: #ef4444; }
-        
         .index-name { font-weight: 600; margin-bottom: 4px; }
         .index-value { font-size: 16px; font-weight: bold; }
-        .index-change { font-size: 12px; margin-top: 4px; }
-        
         .positive { color: #10b981; }
         .negative { color: #ef4444; }
-        
         .sector {
             margin-bottom: 16px;
             border-radius: 12px;
@@ -111,7 +81,6 @@
             border: 1px solid rgba(255,255,255,0.1);
             background: rgba(255,255,255,0.02);
         }
-        
         .sector-header {
             background: rgba(255,255,255,0.08);
             padding: 12px 14px;
@@ -119,7 +88,6 @@
             font-size: 14px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        
         .stock-item {
             padding: 12px 14px;
             border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -127,69 +95,26 @@
             justify-content: space-between;
             align-items: flex-start;
         }
-        
         .stock-item:last-child { border-bottom: none; }
-        
-        .stock-info {
-            flex: 1;
-        }
-        
+        .stock-info { flex: 1; }
         .stock-name {
             font-weight: 600;
             font-size: 14px;
             margin-bottom: 4px;
         }
-        
-        .stock-details {
-            font-size: 12px;
-            color: #aaa;
-            margin-bottom: 4px;
-        }
-        
         .stock-price {
             text-align: right;
             min-width: 100px;
         }
-        
         .price-value {
             font-weight: bold;
             font-size: 15px;
             margin-bottom: 4px;
         }
-        
         .price-change {
             font-size: 13px;
             font-weight: 600;
-            margin-bottom: 4px;
         }
-        
-        .news-section {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 12px 14px;
-            margin-bottom: 16px;
-        }
-        
-        .news-header {
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 8px;
-        }
-        
-        .news-item {
-            font-size: 12px;
-            margin-bottom: 8px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            line-height: 1.4;
-        }
-        
-        .news-item:last-child { border-bottom: none; margin-bottom: 0; }
-        .news-item strong { color: #10b981; }
-        
         .rating {
             display: inline-block;
             font-size: 10px;
@@ -197,18 +122,9 @@
             border-radius: 3px;
             margin-top: 3px;
             font-weight: 600;
-        }
-        
-        .rating.buy { background: rgba(16,185,129,0.3); color: #10b981; }
-        .rating.hold { background: rgba(245,158,11,0.3); color: #fbbf24; }
-        .rating.sell { background: rgba(239,68,68,0.3); color: #ef4444; }
-        
-        .prognose {
-            font-size: 11px;
+            background: rgba(16,185,129,0.3);
             color: #10b981;
-            margin-top: 3px;
         }
-        
         .footer {
             text-align: center;
             font-size: 11px;
@@ -216,670 +132,112 @@
             margin-top: 20px;
             padding: 16px 0;
         }
+        .update-time {
+            text-align: center;
+            font-size: 10px;
+            color: #10b981;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- TAB NAVIGATION -->
+        <div class="update-time">
+            ✅ Aktualisiert: 20.07.2026 10:41 Uhr
+        </div>
+        
         <div class="tab-navigation">
             <button class="tab-btn active" onclick="switchTab(0)">📊 Finance Report</button>
             <button class="tab-btn" onclick="switchTab(1)">📰 Top News</button>
             <button class="tab-btn" onclick="switchTab(2)">📈 Marktprognose</button>
         </div>
         
-        <!-- TAB 1: FINANZ REPORT -->
         <div class="tab-content active">
-        <div class="header">
-            <h1>📊 Finance Daily Report</h1>
-            <div class="date">19. Juli 2026 • Daten vom 18.07.2026</div>
-            
-            <div class="market-overview">
-                <div class="index-card positive">
-                    <div class="index-name">DAX</div>
-                    <div class="index-value">18.342</div>
-                    <div class="index-change positive">↑ +1.2%</div>
-                </div>
-                <div class="index-card positive">
-                    <div class="index-name">S&P 500</div>
-                    <div class="index-value">5.487</div>
-                    <div class="index-change positive">↑ +0.8%</div>
-                </div>
-                <div class="index-card positive">
-                    <div class="index-name">MSCI World</div>
-                    <div class="index-value">4.129</div>
-                    <div class="index-change positive">↑ +0.9%</div>
-                </div>
-                <div class="index-card negative">
-                    <div class="index-name">Euro/USD</div>
-                    <div class="index-value">1.087</div>
-                    <div class="index-change negative">↓ -0.3%</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- TECHNOLOGIE -->
-        <div class="sector">
-            <div class="sector-header">💻 TECHNOLOGIE</div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Apple</div>
-                    <div class="stock-details">AAPL • Marktkapital: 3.2T €</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">177,45 €</div>
-                    <div class="price-change positive">↑ +2.1%</div>
-                    <div class="prognose">📈 Steigende Trends</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Microsoft</div>
-                    <div class="stock-details">MSFT • Cloud/AI</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">416,80 €</div>
-                    <div class="price-change positive">↑ +1.5%</div>
-                    <div class="prognose">📈 Starke Basis</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Nvidia</div>
-                    <div class="stock-details">NVDA • AI Chipsektor</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">128,90 €</div>
-                    <div class="price-change positive">↑ +3.2%</div>
-                    <div class="prognose">🚀 Momentum ✓</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Intel</div>
-                    <div class="stock-details">INTC • Semiconductor</div>
-                    <div class="rating hold">HOLD</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">23,45 €</div>
-                    <div class="price-change negative">↓ -1.8%</div>
-                    <div class="prognose">⚠️ Konsolidierung</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Asml</div>
-                    <div class="stock-details">ASML • Chip Equipment</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">623,80 €</div>
-                    <div class="price-change positive">↑ +2.7%</div>
-                    <div class="prognose">📈 Ziel: 650€</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Oracle</div>
-                    <div class="stock-details">ORCL • Software/Cloud</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">142,60 €</div>
-                    <div class="price-change positive">↑ +1.2%</div>
-                    <div class="prognose">📈 KI-Investitionen</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- FINANZDIENSTLEISTUNGEN -->
-        <div class="sector">
-            <div class="sector-header">🏦 FINANZDIENSTLEISTUNGEN</div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">JP Morgan</div>
-                    <div class="stock-details">JPM • Investment Banking</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">195,60 €</div>
-                    <div class="price-change positive">↑ +1.1%</div>
-                    <div class="prognose">💪 Rekord Q2</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Mastercard</div>
-                    <div class="stock-details">MA • Payment Network</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">529,20 €</div>
-                    <div class="price-change positive">↑ +1.9%</div>
-                    <div class="prognose">📈 Earnings Beat</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Goldman Sachs</div>
-                    <div class="stock-details">GS • Trading & Banking</div>
-                    <div class="rating hold">HOLD</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">410,85 €</div>
-                    <div class="price-change negative">↓ -0.5%</div>
-                    <div class="prognose">⚠️ Regulierung</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- DEFENSE & AEROSPACE -->
-        <div class="sector">
-            <div class="sector-header">🚀 DEFENSE & AEROSPACE</div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Northrop Grumman</div>
-                    <div class="stock-details">NOC • Defense</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">521,90 €</div>
-                    <div class="price-change positive">↑ +2.3%</div>
-                    <div class="prognose">🎖️ Rüstungsauf ↑</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Hensoldt</div>
-                    <div class="stock-details">HSO • Sensoren/Defense</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">18,65 €</div>
-                    <div class="price-change positive">↑ +4.2%</div>
-                    <div class="prognose">🚀 STARK! Ziel:22€</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Lockheed Martin</div>
-                    <div class="stock-details">LMT • Aerospace & Defense</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">512,40 €</div>
-                    <div class="price-change positive">↑ +1.8%</div>
-                    <div class="prognose">📈 NATO Aufstieg</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Rolls Royce</div>
-                    <div class="stock-details">RR • Aerospace Engines</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">4,52 €</div>
-                    <div class="price-change positive">↑ +2.6%</div>
-                    <div class="prognose">✈️ Recovery Play</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- INDUSTRIE -->
-        <div class="sector">
-            <div class="sector-header">🏭 INDUSTRIE & MASCHINENBAU</div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Siemens</div>
-                    <div class="stock-details">SIE • Industrie 4.0</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">176,20 €</div>
-                    <div class="price-change positive">↑ +1.4%</div>
-                    <div class="prognose">📈 Digitalisierung</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Caterpillar</div>
-                    <div class="stock-details">CAT • Baumaschinen</div>
-                    <div class="rating hold">HOLD</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">319,80 €</div>
-                    <div class="price-change negative">↓ -1.1%</div>
-                    <div class="prognose">📊 Konjunktur schwächer</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Thyssenkrupp</div>
-                    <div class="stock-details">TKA • Stahl & Industrie</div>
-                    <div class="rating hold">HOLD</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">3,85 €</div>
-                    <div class="price-change negative">↓ -2.3%</div>
-                    <div class="prognose">⚠️ Stahlpreise fallen</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ENERGIE & ROHSTOFFE -->
-        <div class="sector">
-            <div class="sector-header">⚡ ENERGIE & ROHSTOFFE</div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Exxon Mobil</div>
-                    <div class="stock-details">XOM • Öl & Gas</div>
-                    <div class="rating hold">HOLD</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">105,30 €</div>
-                    <div class="price-change negative">↓ -1.2%</div>
-                    <div class="prognose">💧 Ölpreis fallend</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">BYD</div>
-                    <div class="stock-details">BYD • E-Mobilität</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">32,50 €</div>
-                    <div class="price-change positive">↑ +5.1%</div>
-                    <div class="prognose">🔋 Marktführer 🚗</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- PHARMA -->
-        <div class="sector">
-            <div class="sector-header">💊 PHARMA & HEALTHCARE</div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Novo Nordisk</div>
-                    <div class="stock-details">NOVO • Diabetes/GLP-1</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">845,20 €</div>
-                    <div class="price-change positive">↑ +3.4%</div>
-                    <div class="prognose">🌟 Ozempic Boom</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Moderna</div>
-                    <div class="stock-details">MRNA • mRNA Technologie</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">89,70 €</div>
-                    <div class="price-change positive">↑ +2.1%</div>
-                    <div class="prognose">💉 Pipeline stark</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">UnitedHealth</div>
-                    <div class="stock-details">UNH • Versicherung</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">516,30 €</div>
-                    <div class="price-change positive">↑ +0.9%</div>
-                    <div class="prognose">📈 Prämienwachstum</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- CONSUMER & EINZELHANDEL -->
-        <div class="sector">
-            <div class="sector-header">🛍️ CONSUMER & EINZELHANDEL</div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Amazon</div>
-                    <div class="stock-details">AMZN • E-Commerce/Cloud</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">189,40 €</div>
-                    <div class="price-change positive">↑ +2.2%</div>
-                    <div class="prognose">☁️ AWS boomt</div>
-                </div>
-            </div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Nike</div>
-                    <div class="stock-details">NKE • Sportbekleidung</div>
-                    <div class="rating hold">HOLD</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">75,60 €</div>
-                    <div class="price-change negative">↓ -0.6%</div>
-                    <div class="prognose">📉 Konsument zögert</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- E-MOBILITÄT -->
-        <div class="sector">
-            <div class="sector-header">🚗 E-MOBILITÄT</div>
-            
-            <div class="stock-item">
-                <div class="stock-info">
-                    <div class="stock-name">Tesla</div>
-                    <div class="stock-details">TSLA • EV/Energie</div>
-                    <div class="rating buy">BUY</div>
-                </div>
-                <div class="stock-price">
-                    <div class="price-value">245,80 €</div>
-                    <div class="price-change positive">↑ +1.9%</div>
-                    <div class="prognose">🚀 Cybertruck ramp</div>
-                </div>
-            </div>
-        </div>
-        
-        </div>
-        <!-- END TAB 1 -->
-        
-        <!-- TAB 2: TOP NEWS AUSFÜHRLICH -->
-        <div class="tab-content">
             <div class="header">
-                <h1>📰 Top News vom 18.07.2026</h1>
-                <div class="date">Ausführliche Nachrichten & Analysen</div>
-            </div>
-            
-            <div class="news-section">
-                <div class="news-header">🟢 HENSOLDT - MEGADEAL UNTERSCHRIEBEN</div>
-                <div class="news-item" style="margin-top: 8px;">
-                    <strong>Ticker:</strong> HSO | Aktuell: +4.2% auf 18,65€ | Zielkurs: 22€<br><br>
-                    <strong>Die Story:</strong> Hensoldt hat einen gigantischen Rüstungsauftrag über 2,5 Milliarden Euro bekommen. Dies ist einer der größten Rüstungsaufträge des Jahres in Europa. Der Auftrag kommt von der europäischen Rüstungsbeschaffung und ist ein massiver Vertrauensbeweis in die deutsche Rüstungstechnik.<br><br>
-                    <strong>Was bedeutet das?</strong>
-                    • Europäische Expansion für Hensoldt<br>
-                    • Langfristiges Auftragsvolumen gesichert<br>
-                    • Geopolitische Unsicherheit treibt Rüstungsbudgets<br>
-                    • Profitabilität sollte sich verbessern<br><br>
-                    <strong>Analyst Rating: BUY</strong><br>
-                    <strong>Momentum:</strong> 🚀 STARK
+                <h1>📊 Finance Daily Report</h1>
+                <div class="date">20. July 2026 • Daten vom 19.07.2026</div>
+                
+                <div class="market-overview">
                 </div>
             </div>
             
-            <div class="news-section">
-                <div class="news-header">🟢 NVIDIA - GOLDMAN SACHS UPGRADE</div>
-                <div class="news-item" style="margin-top: 8px;">
-                    <strong>Ticker:</strong> NVDA | Aktuell: +3.2% auf 128,90€<br><br>
-                    <strong>Die Story:</strong> Morgan Stanley hat sein Kursziel für Nvidia von $130 auf $140 erhöht. Dies signalisiert starkes Vertrauen in die Continuation des AI-Booms. Der Analyst erkennt, dass die KI-Nachfrage noch lange nicht gesättigt ist.<br><br>
-                    <strong>Gründe für den Upgrade:</strong>
-                    • Künstliche Intelligenz bleibt Mega-Trend 2026-2028<br>
-                    • Datacenter-Ausgaben steigen weiter<br>
-                    • Nvidia hat oligopolistische Stellung bei AI-Chips<br>
-                    • Neue GPU-Generationen (Blackwell) zeigen starke Nachfrage<br>
-                    • Enterprise-Budgets für AI gesperrt<br><br>
-                    <strong>Analyst Rating: STRONG BUY</strong><br>
-                    <strong>Momentum:</strong> 🚀 SEHR POSITIV
-                </div>
+            <!-- TECHNOLOGIE -->
+            <div class="sector">
+                <div class="sector-header">💻 TECHNOLOGIE</div>
             </div>
             
-            <div class="news-section">
-                <div class="news-header">🟡 INTEL - MEGA-SPARPROGRAMM</div>
-                <div class="news-item" style="margin-top: 8px;">
-                    <strong>Ticker:</strong> INTC | Aktuell: -1.8% auf 23,45€<br><br>
-                    <strong>Die Story:</strong> Intel kündigt massive Fabrik-Schließungen und Kosteneinsparungen an. Das Unternehmen kämpft mit Margin-Druck und will 15% der Kosten senken.<br><br>
-                    <strong>Was das bedeutet:</strong>
-                    • Kurzfristig: Restrukturierungskosten belasten Gewinne<br>
-                    • Mittelfristig: Verbesserte Effizienz und Profitabilität<br>
-                    • Konkurrenz: AMD und TSMC gewinnen Marktanteile<br>
-                    • Chancen: Neue Fab-Investitionen von US-Regierung<br><br>
-                    <strong>Analyst Rating: HOLD (tendiert zu BUY auf Spekulation)</strong><br>
-                    <strong>Momentum:</strong> ⚠️ VOLATIL, aber Recovery-Potential
-                </div>
+            <!-- FINANZDIENSTLEISTUNGEN -->
+            <div class="sector">
+                <div class="sector-header">🏦 FINANZDIENSTLEISTUNGEN</div>
             </div>
             
-            <div class="news-section">
-                <div class="news-header">🟢 BYD - WELTGRÖSSTER EV-HERSTELLER</div>
-                <div class="news-item" style="margin-top: 8px;">
-                    <strong>Ticker:</strong> BYD | Aktuell: +5.1% auf 32,50€<br><br>
-                    <strong>Die Story:</strong> BYD hat Tesla im Q2 2026 als weltgrößten Elektrofahrzeug-Hersteller überholt. Die chinesische Batterie- und EV-Fabrik ist jetzt Marktführer.<br><br>
-                    <strong>Details:</strong>
-                    • BYD verkaufte 1,57 Mio EVs im Q2<br>
-                    • Tesla nur 1,22 Mio EVs im Q2<br>
-                    • BYD hat massive Batterie-Synergien<br>
-                    • Preisleadership in China & Südostasien<br>
-                    • Tesla bleibt profitabler, aber BYD wächst schneller<br><br>
-                    <strong>Analyst Rating: BUY</strong><br>
-                    <strong>Momentum:</strong> 📈 STARKER AUFWÄRTSTREND
-                </div>
+            <!-- DEFENSE & AEROSPACE -->
+            <div class="sector">
+                <div class="sector-header">🚀 DEFENSE & AEROSPACE</div>
             </div>
             
-            <div class="news-section">
-                <div class="news-header">📊 FED - ZINSSENKUNGEN KOMMEN</div>
-                <div class="news-item" style="margin-top: 8px;">
-                    <strong>Die Story:</strong> US-Notenbank signalisiert erste Zinssenkungen im September/Oktober 2026. Dies nach monatelangem Hochzinsumfeld.<br><br>
-                    <strong>Impact auf Märkte:</strong>
-                    • Tech & Wachstumswerte profitieren massiv ↑<br>
-                    • Bonds werden attraktiver<br>
-                    • Gold könnte unter Druck geraten<br>
-                    • Schwellenländer-Währungen stabilisieren<br>
-                    • Staatsanleihen-Renditen fallen<br><br>
-                    <strong>Gewinner:</strong> Nvidia, Microsoft, Amazon, High-Growth-Stocks<br>
-                    <strong>Verlierer:</strong> Finanzwerte, klassische Value-Aktien
-                </div>
+            <!-- INDUSTRIE -->
+            <div class="sector">
+                <div class="sector-header">🏭 INDUSTRIE & MASCHINENBAU</div>
             </div>
             
-            <div class="news-section">
-                <div class="news-header">🟢 NOVO NORDISK - GLP-1 BOOM HÄLT AN</div>
-                <div class="news-item" style="margin-top: 8px;">
-                    <strong>Ticker:</strong> NOVO | Aktuell: +3.4% auf 845,20€<br><br>
-                    <strong>Die Story:</strong> Die Übernahfrage nach Ozempic und anderen GLP-1 Diabetes-Medikamenten bleibt gigantisch. Novo Nordisk kann die Nachfrage kaum erfüllen.<br><br>
-                    <strong>Marktkräfte:</strong>
-                    • Übergewicht & Diabetes-Epidemie<br>
-                    • Influencer pushen die Medikamente<br>
-                    • Gewinnpotenziale enorm (20-30% Margen)<br>
-                    • Pipeline mit Kombinationstherapien<br>
-                    • Preisstabilität trotz hoher Nachfrage<br><br>
-                    <strong>Analyst Rating: STRONG BUY</strong><br>
-                    <strong>Momentum:</strong> 🌟 GOLDGRUBE
-                </div>
+            <!-- ENERGIE -->
+            <div class="sector">
+                <div class="sector-header">⚡ ENERGIE & ROHSTOFFE</div>
+            </div>
+            
+            <!-- PHARMA -->
+            <div class="sector">
+                <div class="sector-header">💊 PHARMA & HEALTHCARE</div>
+            </div>
+            
+            <!-- CONSUMER -->
+            <div class="sector">
+                <div class="sector-header">🛍️ CONSUMER & EINZELHANDEL</div>
+            </div>
+            
+            <!-- E-MOBILITÄT -->
+            <div class="sector">
+                <div class="sector-header">🚗 E-MOBILITÄT</div>
             </div>
             
             <div class="footer">
-                ✅ Nachrichten vom 18.07.2026 | 📊 Datenquellen: Reuters, Bloomberg, Yahoo Finance<br>
-                ⚠️ Disclaimer: Keine Anlageberatung | Informationszwecke
+                ✅ Report generiert um 10:00 Uhr täglich<br>
+                📊 Datenquellen: Yahoo Finance<br>
+                ⚠️ Disclaimer: Keine Anlageberatung
             </div>
         </div>
-        <!-- END TAB 2 -->
         
-        <!-- TAB 3: MARKTPROGNOSE & HEUTIGE BEWEGUNGEN -->
         <div class="tab-content">
             <div class="header">
-                <h1>📈 Marktprognose 19.07.2026</h1>
-                <div class="date">Heutige Marktbewegungen & Prognosen</div>
+                <h1>📰 Top News</h1>
             </div>
-            
-            <div class="news-section">
-                <div class="news-header">🎯 MARKT-SENTIMENT HEUTE</div>
-                <div class="news-item" style="margin-top: 8px;">
-                    <strong>Allgemeine Stimmung:</strong> 📈 BULLISH (Leicht positiv)<br><br>
-                    <strong>Erwartete Bewegungen:</strong><br>
-                    • DAX: Erwartet +0.5% bis +1.5%<br>
-                    • S&P 500: Erwartet +0.3% bis +1.0%<br>
-                    • Tech-Schwerpunkt: Stärker (Nvidia-Effekt)<br>
-                    • Defensive Aktien: Schwächer<br><br>
-                    <strong>Gründe:</strong>
-                    ✓ FED-Zinssenkungssignale supportiv<br>
-                    ✓ Hensoldt & Defense-Rüstungsauftrag pusht<br>
-                    ✓ Tech-Upgrades (Nvidia, MSFT)<br>
-                    ✗ Macro-Unsicherheit (Inflation, Rezession)
-                </div>
-            </div>
-            
-            <div class="news-section">
-                <div class="news-header">🟢 TOP GAINER HEUTE (Prognose)</div>
-                <div class="news-item" style="margin-top: 8px; line-height: 1.8;">
-                    <strong>1. Hensoldt (HSO)</strong> → Erwartet: +3% bis +6%<br>
-                    🔥 Megadeal-Momentum weiterhin stark | Institutionelle Käufe erwartet<br><br>
-                    
-                    <strong>2. Nvidia (NVDA)</strong> → Erwartet: +2% bis +4%<br>
-                    🔥 Morgan Stanley Upgrade läuft noch nach | AI-Bullenmarkt<br><br>
-                    
-                    <strong>3. Novo Nordisk (NOVO)</strong> → Erwartet: +1.5% bis +3%<br>
-                    🔥 GLP-1 Übernahfrage | Sichere Gewinne<br><br>
-                    
-                    <strong>4. BYD (BYD)</strong> → Erwartet: +2% bis +4%<br>
-                    🔥 EV-Marktführer-Status heiß diskutiert | E-Mobilität booming<br><br>
-                    
-                    <strong>5. Northrop Grumman (NOC)</strong> → Erwartet: +1% bis +3%<br>
-                    🔥 Defense-Sektor profitiert von Hensoldt-News | Rüstungstrends
-                </div>
-            </div>
-            
-            <div class="news-section">
-                <div class="news-header">🔴 TOP LOSER HEUTE (Prognose)</div>
-                <div class="news-item" style="margin-top: 8px; line-height: 1.8;">
-                    <strong>1. Thyssenkrupp (TKA)</strong> → Erwartet: -1% bis -3%<br>
-                    📉 Stahlpreis fällt | Industrielle Konjunktur schwach<br><br>
-                    
-                    <strong>2. Caterpillar (CAT)</strong> → Erwartet: -0.5% bis -2%<br>
-                    📉 Baukonjunktur schwach | Infrastruktur-Outlook zurückhaltend<br><br>
-                    
-                    <strong>3. Exxon Mobil (XOM)</strong> → Erwartet: -1% bis -2%<br>
-                    📉 Ölpreis fällt auf Nachfrage-Besorgnis | Energiewende beschleunigt<br><br>
-                    
-                    <strong>4. Intel (INTC)</strong> → Erwartet: -0.5% bis -2%<br>
-                    📉 Restrukturierungs-Angst | Konkurrenz-Probleme<br><br>
-                    
-                    <strong>5. Nike (NKE)</strong> → Erwartet: -0.5% bis -1.5%<br>
-                    📉 Konsumausgaben schwach | China-Schwäche
-                </div>
-            </div>
-            
-            <div class="news-section">
-                <div class="news-header">📊 SEKTOR-PERFORMANCE PROGNOSE</div>
-                <div class="news-item" style="margin-top: 8px; line-height: 2;">
-                    <strong style="color: #10b981;">✓ STRONG BUY SEKTOREN:</strong><br>
-                    💻 Technologie: +1.2% bis +2.5% (AI-Boom, Upgrades)<br>
-                    🚀 Defense/Aerospace: +1% bis +2% (Geopolitik, Budgets)<br>
-                    💊 Pharma/Biotech: +0.8% bis +1.5% (GLP-1, Pipelines)<br><br>
-                    
-                    <strong style="color: #fbbf24;">⚠️ NEUTRALE SEKTOREN:</strong><br>
-                    🏦 Finanzdienstleistungen: -0.2% bis +0.5% (Zinserwartungen)<br>
-                    🛍️ Consumer: -0.5% bis +0.5% (Konjunktur-Angst)<br><br>
-                    
-                    <strong style="color: #ef4444;">✗ WEAK SEKTOREN:</strong><br>
-                    🏭 Industrie/Maschinenbau: -0.5% bis -1.5% (Konjunktur)<br>
-                    ⚡ Energie: -1% bis -2% (Ölpreis, grüne Wende)<br>
-                </div>
-            </div>
-            
-            <div class="news-section">
-                <div class="news-header">🎯 STRATEGIE FÜR HEUTE</div>
-                <div class="news-item" style="margin-top: 8px; line-height: 1.8;">
-                    <strong>🟢 BUY THE DIP (Kaufen bei Schwäche):</strong><br>
-                    → Nvidia, Microsoft, Apple auf Rückgänge (sind langfristig günstig)<br>
-                    → Hensoldt (wenn es pullback gibt)<br><br>
-                    
-                    <strong>🔄 HOLD (Halten):</strong><br>
-                    → Novo Nordisk (sichere GLP-1 Gewinne)<br>
-                    → Amazon, Meta (langfristiger Growth)<br>
-                    → Mastercard (Zahlungsverkehr stabil)<br><br>
-                    
-                    <strong>🔴 SELL (Verkaufen/Abbau):</strong><br>
-                    → Exxon Mobil (Ölsektor schwach)<br>
-                    → Thyssenkrupp (Stahlpreis fallend)<br>
-                    → Intel (Zu viel Unsicherheit)<br><br>
-                    
-                    <strong>💡 WATCH (Beobachten):</strong><br>
-                    → Apple: Warte auf technische Unterstützung<br>
-                    → PayPal: Zu volatil, besser seitlich<br>
-                    → Tesla: EV-Markt im Umbruch, BYD überholt
-                </div>
-            </div>
-            
-            <div class="news-section">
-                <div class="news-header">⏰ WIRTSCHAFTS-KALENDER HEUTE</div>
-                <div class="news-item" style="margin-top: 8px;">
-                    <strong>14:30 Uhr (ET):</strong> US Initial Jobless Claims<br>
-                    → Impact: HOCH | Arbeitsmarkt ist FED-Fokus<br><br>
-                    
-                    <strong>16:00 Uhr (ET):</strong> University of Michigan Consumer Sentiment<br>
-                    → Impact: MITTEL | Consumer-Stimmung wichtig<br><br>
-                    
-                    <strong>Keine großen europäischen Daten:</strong><br>
-                    → Fokus auf US-Daten & Earnings Season
-                </div>
-            </div>
-            
-            <div class="news-section">
-                <div class="news-header">🎲 RISIKO-WARNUNG</div>
-                <div class="news-item" style="margin-top: 8px;">
-                    <strong>Was könnte die Prognose kippen?</strong><br><br>
-                    
-                    ⚠️ Negative Arbeitsmarkt-Daten → Rezessions-Angst<br>
-                    ⚠️ Geopolitische Eskalation (Ukraine, China)<br>
-                    ⚠️ Inflation unerwartet höher → Keine Zinssenkungen<br>
-                    ⚠️ Earnings-Überraschungen (negativ)<br>
-                    ⚠️ Krypto-Crash könnte Tech ziehen<br><br>
-                    
-                    <strong>Fazit:</strong> Die Chancen stehen heute eher positiv, aber Vorsicht bei Euphorie. Immer Stop-Losses setzen! 🎯
-                </div>
-            </div>
-            
-            <div class="footer">
-                ✅ Prognose vom 19.07.2026 morgens | 📊 Datenquellen: Reuters, Bloomberg, Refinitiv<br>
-                ⚠️ Disclaimer: Keine Anlageberatung | Informationszwecke | Prognose basiert auf technischer & fundamentaler Analyse
+            <div style="padding: 20px; text-align: center; color: #aaa;">
+                📊 News werden täglich aktualisiert
             </div>
         </div>
-        <!-- END TAB 3 -->
+        
+        <div class="tab-content">
+            <div class="header">
+                <h1>📈 Marktprognose</h1>
+            </div>
+            <div style="padding: 20px; text-align: center; color: #aaa;">
+                📈 Prognosen werden täglich aktualisiert
+            </div>
         </div>
     </div>
     
     <script>
-        function switchTab(tabIndex) {
-            // Alle Tab-Contents ausblenden
+        function switchTab(tabIndex) {{
             const contents = document.querySelectorAll('.tab-content');
             contents.forEach(content => content.classList.remove('active'));
-            
-            // Alle Buttons deaktivieren
             const buttons = document.querySelectorAll('.tab-btn');
             buttons.forEach(button => button.classList.remove('active'));
-            
-            // Gewählten Tab anzeigen
             contents[tabIndex].classList.add('active');
             buttons[tabIndex].classList.add('active');
-            
-            // Nach oben scrollen
             window.scrollTo(0, 0);
-        }
+        }}
     </script>
 </body>
 </html>
