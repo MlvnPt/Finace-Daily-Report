@@ -19,7 +19,6 @@
             border-bottom: 2px solid rgba(255,255,255,0.1);
             position: sticky;
             top: 0;
-            z-index: 100;
         }
         .tab-btn {
             flex: 1;
@@ -75,7 +74,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="update" id="updateTime">✅ Laden...</div>
+        <div class="update" id="updateTime">✅ Lade Kurse...</div>
         <div class="tab-navigation">
             <button class="tab-btn active" onclick="switchTab(0)">📊 Finance Report</button>
             <button class="tab-btn" onclick="switchTab(1)">📰 Top News</button>
@@ -92,23 +91,23 @@
         
         <div class="tab-content">
             <div class="header"><h1>📰 Top News</h1></div>
-            <div style="padding: 20px; color: #aaa;">📊 News werden täglich aktualisiert</div>
+            <div style="padding: 20px; color: #aaa;">News täglich aktualisiert</div>
         </div>
         
         <div class="tab-content">
             <div class="header"><h1>📈 Marktprognose</h1></div>
-            <div style="padding: 20px; color: #aaa;">📈 Prognosen werden täglich aktualisiert</div>
+            <div style="padding: 20px; color: #aaa;">Prognosen täglich aktualisiert</div>
         </div>
     </div>
     
     <script>
-        const TOKEN = 'DEIN_IEX_TOKEN_HIER'; // ← ERSETZE MIT DEINEM TOKEN!
+        const API_KEY = 'd9ggnghr01qq65366gp0d9ggnghr01qq65366gpgd9ggnghr01qq65366gp0d9ggnghr01qq65366gpg'; // ← ERSETZE HIER!
 
         const STOCKS = {
             'AAPL': 'Apple', 'MSFT': 'Microsoft', 'NVDA': 'Nvidia',
             'INTC': 'Intel', 'ASML': 'Asml', 'ORCL': 'Oracle',
             'JPM': 'JP Morgan', 'MA': 'Mastercard', 'GS': 'Goldman Sachs',
-            'NOC': 'Northrop Grumman', 'LMT': 'Lockheed Martin', 'RYA': 'Rolls Royce',
+            'NOC': 'Northrop Grumman', 'LMT': 'Lockheed Martin',
             'SIE': 'Siemens', 'CAT': 'Caterpillar', 'TKA': 'Thyssenkrupp',
             'XOM': 'Exxon Mobil', 'BYD': 'BYD',
             'NVO': 'Novo Nordisk', 'MRNA': 'Moderna', 'UNH': 'UnitedHealth',
@@ -117,8 +116,8 @@
 
         const SECTORS = {
             '💻 TECHNOLOGIE': ['Apple', 'Microsoft', 'Nvidia', 'Intel', 'Asml', 'Oracle'],
-            '🏦 FINANZDIENSTLEISTUNGEN': ['JP Morgan', 'Mastercard', 'Goldman Sachs'],
-            '🚀 DEFENSE & AEROSPACE': ['Northrop Grumman', 'Lockheed Martin', 'Rolls Royce'],
+            '🏦 FINANZ': ['JP Morgan', 'Mastercard', 'Goldman Sachs'],
+            '🚀 DEFENSE': ['Northrop Grumman', 'Lockheed Martin'],
             '🏭 INDUSTRIE': ['Siemens', 'Caterpillar', 'Thyssenkrupp'],
             '⚡ ENERGIE': ['Exxon Mobil', 'BYD'],
             '💊 PHARMA': ['Novo Nordisk', 'Moderna', 'UnitedHealth'],
@@ -126,76 +125,54 @@
             '🚗 E-MOBILITÄT': ['Tesla']
         };
 
-        async function getStockPrice(ticker) {
+        async function getStock(ticker) {
             try {
-                const url = `https://cloud.iexapis.com/stable/stock/${ticker}/quote?token=${TOKEN}`;
-                const response = await fetch(url);
-                const data = await response.json();
+                const url = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${API_KEY}`;
+                const res = await fetch(url);
+                const data = await res.json();
                 
-                if (data.latestPrice && data.previousClose) {
-                    const current = data.latestPrice;
-                    const previous = data.previousClose;
-                    const change = ((current - previous) / previous) * 100;
-                    
+                if (data.c && data.pc) {
+                    const change = ((data.c - data.pc) / data.pc) * 100;
                     return {
-                        price: current.toFixed(2),
+                        price: data.c.toFixed(2),
                         change: Math.abs(change).toFixed(2),
                         arrow: change >= 0 ? '↑' : '↓',
                         color: change >= 0 ? 'positive' : 'negative'
                     };
                 }
             } catch (e) {
-                console.log(`Error for ${ticker}`);
+                console.log(`Error ${ticker}`);
             }
             return null;
         }
 
-        async function loadAllStocks() {
+        async function loadStocks() {
             const stocks = {};
-            
             for (const [ticker, name] of Object.entries(STOCKS)) {
-                const data = await getStockPrice(ticker);
-                if (data) {
-                    stocks[name] = data;
-                }
+                const data = await getStock(ticker);
+                if (data) stocks[name] = data;
             }
-            
-            renderStocks(stocks);
-            updateTime();
+            render(stocks);
         }
 
-        function renderStocks(stocks) {
+        function render(stocks) {
             let html = '';
-            
-            for (const [sectorName, names] of Object.entries(SECTORS)) {
-                html += `<div class="sector">
-                    <div class="sector-header">${sectorName}</div>`;
-                
+            for (const [sector, names] of Object.entries(SECTORS)) {
+                html += `<div class="sector"><div class="sector-header">${sector}</div>`;
                 for (const name of names) {
                     if (stocks[name]) {
                         const s = stocks[name];
-                        html += `<div class="stock-item">
-                            <div>${name}</div>
-                            <div><span class="${s.color}">${s.price}€ ${s.arrow} ${s.change}%</span></div>
-                        </div>`;
+                        html += `<div class="stock-item"><div>${name}</div><div><span class="${s.color}">${s.price}€ ${s.arrow} ${s.change}%</span></div></div>`;
                     }
                 }
                 html += '</div>';
             }
-            
             document.getElementById('stocksContainer').innerHTML = html;
-        }
-
-        function updateTime() {
+            
             const now = new Date();
-            document.getElementById('updateTime').textContent = `✅ Aktualisiert: ${now.toLocaleString('de-DE')}`;
-            
-            const yesterday = new Date(now);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const dateStr = now.toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            const yesterdayStr = yesterday.toLocaleDateString('de-DE');
-            
-            document.getElementById('dateInfo').textContent = `${dateStr} • Daten vom ${yesterdayStr}`;
+            document.getElementById('updateTime').textContent = `✅ ${now.toLocaleString('de-DE')}`;
+            const yesterday = new Date(now.getTime() - 86400000);
+            document.getElementById('dateInfo').textContent = `${now.toLocaleDateString('de-DE', {weekday:'long', year:'numeric', month:'long', day:'numeric'})} • Daten vom ${yesterday.toLocaleDateString('de-DE')}`;
         }
 
         function switchTab(i) {
@@ -205,11 +182,8 @@
             document.querySelectorAll('.tab-btn')[i].classList.add('active');
         }
 
-        // Start
-        loadAllStocks();
-        
-        // Alle 60 Sekunden neu laden
-        setInterval(loadAllStocks, 60000);
+        loadStocks();
+        setInterval(loadStocks, 60000);
     </script>
 </body>
 </html>
