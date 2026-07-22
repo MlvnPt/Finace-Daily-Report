@@ -77,8 +77,10 @@
             border-radius: 8px;
             border-left: 3px solid #10b981;
         }
-        .news-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
-        .news-source { font-size: 11px; color: #aaa; }
+        .news-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; color: #fff; }
+        .news-desc { font-size: 12px; color: #bbb; margin-bottom: 6px; line-height: 1.4; }
+        .news-source { font-size: 10px; color: #888; }
+        .news-link { display: inline-block; margin-top: 6px; padding: 4px 8px; background: rgba(16,185,129,0.2); color: #10b981; border-radius: 4px; font-size: 10px; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -102,23 +104,10 @@
         <!-- TAB 2: NEWS -->
         <div class="tab-content">
             <div class="header">
-                <h1>📰 Markt-News</h1>
+                <h1>📰 Finanz-News</h1>
+                <div class="date">Echtzeit-Updates</div>
             </div>
-            <div id="newsContainer">
-                <div class="news-item">
-                    <div class="news-title">Technologie-Sektor weiterhin Treiber</div>
-                    <div class="news-source">22.07.2026 - Marktanalyse</div>
-                </div>
-                <div class="news-item">
-                    <div class="news-title">KI-Aktien zeigen starke Performance</div>
-                    <div class="news-source">22.07.2026 - Sektor-Report</div>
-                </div>
-                <div class="news-item">
-                    <div class="news-title">Defensive Aktien unter Druck</div>
-                    <div class="news-source">22.07.2026 - Markttrends</div>
-                </div>
-                <p style="font-size: 10px; color: #666; margin-top: 16px; text-align: center;">ℹ️ News täglich aktualisiert</p>
-            </div>
+            <div id="newsContainer" class="loading">⏳ News laden...</div>
         </div>
         
         <!-- TAB 3: ANALYSE -->
@@ -131,7 +120,8 @@
     </div>
     
     <script>
-        const API_KEY = 'd9ggr29r01qq65366t6gd9ggr29r01qq65366t70    '; // DEIN KEY
+        const FINNHUB_KEY = 'd9ggr29r01qq65366t6gd9ggr29r01qq65366t70'; // Dein Finnhub Key
+        const NEWSAPI_KEY = '6952ea9b84ac462b86bb128d3b65402b'; // ← ERSETZE HIER!
 
         const STOCKS = {
             'AAPL': 'Apple', 'MSFT': 'Microsoft', 'NVDA': 'Nvidia',
@@ -159,7 +149,7 @@
 
         async function getStock(ticker) {
             try {
-                const url = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${API_KEY}`;
+                const url = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FINNHUB_KEY}`;
                 const res = await fetch(url);
                 const data = await res.json();
                 
@@ -178,6 +168,18 @@
             return null;
         }
 
+        async function getNews() {
+            try {
+                const url = `https://newsapi.org/v2/everything?q=stock%20market%20finance&sortBy=publishedAt&language=de&pageSize=10&apiKey=${NEWSAPI_KEY}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                return data.articles || [];
+            } catch (e) {
+                console.log('News Error:', e);
+                return [];
+            }
+        }
+
         async function loadStocks() {
             const stocks = {};
             for (const [ticker, name] of Object.entries(STOCKS)) {
@@ -187,6 +189,11 @@
             allStocks = stocks;
             renderStocks(stocks);
             renderAnalysis(stocks);
+        }
+
+        async function loadNews() {
+            const news = await getNews();
+            renderNews(news);
         }
 
         function renderStocks(stocks) {
@@ -207,6 +214,25 @@
             document.getElementById('updateTime').textContent = `✅ ${now.toLocaleString('de-DE')}`;
             const yesterday = new Date(now.getTime() - 86400000);
             document.getElementById('dateInfo').textContent = `${now.toLocaleDateString('de-DE', {weekday:'long', year:'numeric', month:'long', day:'numeric'})} • Daten vom ${yesterday.toLocaleDateString('de-DE')}`;
+        }
+
+        function renderNews(articles) {
+            if (!articles || articles.length === 0) {
+                document.getElementById('newsContainer').innerHTML = '<div class="loading">Keine News verfügbar</div>';
+                return;
+            }
+
+            let html = '';
+            for (let i = 0; i < Math.min(6, articles.length); i++) {
+                const article = articles[i];
+                const date = new Date(article.publishedAt).toLocaleDateString('de-DE');
+                html += `<div class="news-item">
+                    <div class="news-title">${article.title}</div>
+                    <div class="news-desc">${article.description || 'Keine Beschreibung'}</div>
+                    <div class="news-source">📰 ${article.source.name} - ${date}</div>
+                </div>`;
+            }
+            document.getElementById('newsContainer').innerHTML = html;
         }
 
         function renderAnalysis(stocks) {
@@ -233,7 +259,7 @@
             html += '</div>';
 
             html += '<div class="sector"><div class="sector-header">📊 Markttrends</div>';
-            html += `<div class="news-item">Durchschnittliche Veränderung: <strong>${avgChange.toFixed(2)}%</strong><br>Sentiment: ${avgChange > 0 ? '🟢 Positiv' : '🔴 Negativ'}</div>`;
+            html += `<div class="news-item">Durchschn. Veränderung: <strong>${avgChange.toFixed(2)}%</strong><br>Sentiment: ${avgChange > 0 ? '🟢 Positiv' : '🔴 Negativ'}</div>`;
             html += '</div>';
 
             document.getElementById('analysisContainer').innerHTML = html;
@@ -248,9 +274,11 @@
 
         // Start
         loadStocks();
+        loadNews();
 
-        // Refresh nur alle 5 Minuten (weniger API-Aufrufe!)
+        // Refresh: Kurse alle 5 Min, News alle 10 Min
         setInterval(loadStocks, 300000);
+        setInterval(loadNews, 600000);
     </script>
 </body>
 </html>
