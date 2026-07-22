@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance Daily Report</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%); color:#fff; min-height:100vh; }
+.container { max-width:600px; margin:0 auto; }
+.tab-navigation { display:flex; background:rgba(0,0,0,0.3); border-bottom:2px solid rgba(255,255,255,0.1); position:sticky; top:0; z-index:100; }
+.tab-btn { flex:1; padding:12px 10px; background:none; border:none; color:#aaa; font-size:13px; font-weight:600; cursor:pointer; border-bottom:3px solid transparent; }
+.tab-btn.active { color:#10b981; border-bottom-color:#10b981; background:rgba(16,185,129,0.1); }
+.tab-content { display:none; padding:12px; }
+.tab-content.active { display:block; }
+.header { background:rgba(255,255,255,0.05); border-radius:12px; padding:16px; margin-bottom:16px; border:1px solid rgba(255,255,255,0.1); }
+.header h1 { font-size:24px; margin-bottom:8px; }
+.header .date { font-size:12px; color:#aaa; }
+.sector { margin-bottom:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.02); }
+.sector-header { background:rgba(255,255,255,0.08); padding:12px 14px; font-weight:600; font-size:14px; }
+.stock-item { padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center; }
+.stock-item:last-child { border-bottom:none; }
+.stock-name { font-weight:600; font-size:14px; }
+.stock-data { text-align:right; }
+.price { font-weight:bold; font-size:14px; }
+.positive { color:#10b981; }
+.negative { color:#ef4444; }
+.signal-badge { font-size:11px; margin-top:2px; padding:2px 6px; border-radius:6px; display:inline-block; }
+.sig-buy { background:rgba(16,185,129,0.2); color:#10b981; }
+.sig-sell { background:rgba(239,68,68,0.2); color:#ef4444; }
+.sig-hold { background:rgba(234,179,8,0.2); color:#eab308; }
+.update { text-align:center; font-size:10px; color:#10b981; padding:8px; }
+.news-item { padding:12px 14px; margin-bottom:10px; background:rgba(255,255,255,0.05); border-radius:8px; border-left:3px solid #10b981; }
+.news-title { font-weight:600; font-size:13px; margin-bottom:4px; }
+.news-desc { font-size:12px; color:#bbb; margin-bottom:6px; line-height:1.4; }
+.news-source { font-size:10px; color:#888; }
+.prognose-item { padding:10px 14px; margin-bottom:8px; border-radius:8px; background:rgba(255,255,255,0.04); border-left:3px solid #666; }
+.prognose-item.sig-buy { border-left-color:#10b981; }
+.prognose-item.sig-sell { border-left-color:#ef4444; }
+.prognose-item.sig-hold { border-left-color:#eab308; }
+.loading { text-align:center; padding:20px; color:#aaa; }
+.disclaimer { font-size:10px; color:#666; text-align:center; padding:16px; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="update">✅ Generiert: 22.07.2026 19:44 Uhr</div>
+<div class="tab-navigation">
+<button class="tab-btn active" onclick="switchTab(0)">📊 Finance Report</button>
+<button class="tab-btn" onclick="switchTab(1)">📰 Top News</button>
+<button class="tab-btn" onclick="switchTab(2)">📈 Prognose</button>
+</div>
+
+<div class="tab-content active">
+<div class="header">
+<h1>📊 Finance Daily Report</h1>
+<div class="date">22.07.2026 • Daten vom 22.07.2026</div>
+</div>
+<div class="sector"><div class="sector-header">💻 TECHNOLOGIE</div><div class="stock-item">
+        <div class="stock-name">Cisco Systems</div>
+        <div class="stock-data">
+            <div class="price positive">112.38$ ↑ 0.18%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Cloudflare</div>
+        <div class="stock-data">
+            <div class="price negative">269.95$ ↓ 0.87%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">SAP</div>
+        <div class="stock-data">
+            <div class="price negative">147.93$ ↓ 4.15%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Apple</div>
+        <div class="stock-data">
+            <div class="price negative">324.48$ ↓ 0.99%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Microsoft</div>
+        <div class="stock-data">
+            <div class="price negative">388.71$ ↓ 2.27%</div>
+            <div class="signal-badge sig-buy">🟢 BUY</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Nvidia</div>
+        <div class="stock-data">
+            <div class="price positive">212.62$ ↑ 2.57%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Alphabet</div>
+        <div class="stock-data">
+            <div class="price negative">345.4$ ↓ 0.5%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Meta</div>
+        <div class="stock-data">
+            <div class="price negative">626.12$ ↓ 2.75%</div>
+            <div class="signal-badge sig-buy">🟢 BUY</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Sandisk</div>
+        <div class="stock-data">
+            <div class="price positive">1602.0$ ↑ 0.79%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">ASML</div>
+        <div class="stock-data">
+            <div class="price positive">1806.5$ ↑ 0.28%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Oracle</div>
+        <div class="stock-data">
+            <div class="price negative">126.04$ ↓ 0.8%</div>
+            <div class="signal-badge sig-buy">🟢 BUY</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Intel</div>
+        <div class="stock-data">
+            <div class="price negative">103.96$ ↓ 1.41%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div></div><div class="sector"><div class="sector-header">🏦 FINANZDIENSTLEISTUNGEN</div><div class="stock-item">
+        <div class="stock-name">PayPal</div>
+        <div class="stock-data">
+            <div class="price negative">55.46$ ↓ 0.7%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">JP Morgan</div>
+        <div class="stock-data">
+            <div class="price positive">348.22$ ↑ 0.87%</div>
+            <div class="signal-badge sig-buy">🟢 BUY</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Mastercard</div>
+        <div class="stock-data">
+            <div class="price negative">532.09$ ↓ 1.15%</div>
+            <div class="signal-badge sig-buy">🟢 BUY</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Goldman Sachs</div>
+        <div class="stock-data">
+            <div class="price positive">1099.4$ ↑ 1.27%</div>
+            <div class="signal-badge sig-buy">🟢 BUY</div>
+        </div>
+    </div></div><div class="sector"><div class="sector-header">🚀 DEFENSE & AEROSPACE</div><div class="stock-item">
+        <div class="stock-name">Hensoldt</div>
+        <div class="stock-data">
+            <div class="price positive">77.28€ ↑ 1.44%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Rheinmetall</div>
+        <div class="stock-data">
+            <div class="price positive">1007.8€ ↑ 1.25%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Northrop Grumman</div>
+        <div class="stock-data">
+            <div class="price positive">523.61$ ↑ 2.21%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Lockheed Martin</div>
+        <div class="stock-data">
+            <div class="price positive">514.99$ ↑ 1.56%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Rolls Royce</div>
+        <div class="stock-data">
+            <div class="price positive">18.87$ ↑ 1.34%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Droneshield</div>
+        <div class="stock-data">
+            <div class="price negative">2.16$ ↓ 0.46%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div></div><div class="sector"><div class="sector-header">🏭 INDUSTRIE & MASCHINENBAU</div><div class="stock-item">
+        <div class="stock-name">Astronics</div>
+        <div class="stock-data">
+            <div class="price positive">70.34$ ↑ 1.94%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Caterpillar</div>
+        <div class="stock-data">
+            <div class="price positive">893.97$ ↑ 0.45%</div>
+            <div class="signal-badge sig-buy">🟢 BUY</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Siemens Energy</div>
+        <div class="stock-data">
+            <div class="price negative">152.32€ ↓ 3.68%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Siemens</div>
+        <div class="stock-data">
+            <div class="price positive">271.25€ ↑ 0.3%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Thyssenkrupp</div>
+        <div class="stock-data">
+            <div class="price positive">12.19€ ↑ 0.16%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div></div><div class="sector"><div class="sector-header">⚡ ENERGIE & ROHSTOFFE</div><div class="stock-item">
+        <div class="stock-name">Exxon Mobil</div>
+        <div class="stock-data">
+            <div class="price positive">154.5$ ↑ 1.84%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Pan American Silver</div>
+        <div class="stock-data">
+            <div class="price positive">45.06$ ↑ 1.42%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">BASF</div>
+        <div class="stock-data">
+            <div class="price positive">48.97€ ↑ 1.5%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div></div><div class="sector"><div class="sector-header">💊 PHARMA & HEALTHCARE</div><div class="stock-item">
+        <div class="stock-name">UnitedHealth</div>
+        <div class="stock-data">
+            <div class="price negative">430.43$ ↓ 1.36%</div>
+            <div class="signal-badge sig-buy">🟢 BUY</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Novo Nordisk</div>
+        <div class="stock-data">
+            <div class="price negative">48.1$ ↓ 2.58%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Moderna</div>
+        <div class="stock-data">
+            <div class="price negative">57.86$ ↓ 3.02%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div></div><div class="sector"><div class="sector-header">🛍️ CONSUMER & EINZELHANDEL</div><div class="stock-item">
+        <div class="stock-name">Amazon</div>
+        <div class="stock-data">
+            <div class="price negative">244.79$ ↓ 1.11%</div>
+            <div class="signal-badge sig-buy">🟢 BUY</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Nike</div>
+        <div class="stock-data">
+            <div class="price negative">42.1$ ↓ 2.0%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div></div><div class="sector"><div class="sector-header">🚗 E-MOBILITÄT</div><div class="stock-item">
+        <div class="stock-name">Tesla</div>
+        <div class="stock-data">
+            <div class="price negative">374.63$ ↓ 1.14%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">BYD</div>
+        <div class="stock-data">
+            <div class="price negative">11.16$ ↓ 1.67%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div></div><div class="sector"><div class="sector-header">🤖 AI & EMERGING</div><div class="stock-item">
+        <div class="stock-name">Nebius AI</div>
+        <div class="stock-data">
+            <div class="price positive">221.15$ ↑ 1.95%</div>
+            <div class="signal-badge sig-buy">🟢 BUY</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Zeta Global</div>
+        <div class="stock-data">
+            <div class="price negative">20.03$ ↓ 5.47%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">Palantir</div>
+        <div class="stock-data">
+            <div class="price negative">123.97$ ↓ 6.55%</div>
+            <div class="signal-badge sig-buy">🟢 BUY</div>
+        </div>
+    </div></div><div class="sector"><div class="sector-header">📊 INDIZES & ETFs</div><div class="stock-item">
+        <div class="stock-name">MSCI World</div>
+        <div class="stock-data">
+            <div class="price negative">203.11$ ↓ 0.01%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div><div class="stock-item">
+        <div class="stock-name">S&P 500</div>
+        <div class="stock-data">
+            <div class="price negative">7502.36$ ↓ 0.09%</div>
+            <div class="signal-badge sig-hold">🟡 HOLD</div>
+        </div>
+    </div></div>
+</div>
+
+<div class="tab-content">
+<div class="header">
+<h1>📰 Top News</h1>
+<div class="date">vom 22.07.2026</div>
+</div>
+<div class="news-item">
+            <div class="news-title">J&J gets a big win on its new robotic surgical system — plus, a flood of earnings</div>
+            <div class="news-desc">Every weekday, the Investing Club releases the Homestretch; an actionable afternoon update just in time for the last hour of trading.</div>
+            <div class="news-source">📰 CNBC - 22.07.2026</div>
+        </div><div class="news-item">
+            <div class="news-title">EXCLUSIVE: Iran strikes on CIA facilities prompt questions about possible Russian role - Reuters</div>
+            <div class="news-desc">EXCLUSIVE: Iran strikes on CIA facilities prompt questions about possible Russian role  Reuters</div>
+            <div class="news-source">📰 Reuters - 22.07.2026</div>
+        </div><div class="news-item">
+            <div class="news-title">Trump attends return of US soldiers killed in Iran war - Reuters</div>
+            <div class="news-desc">Trump attends return of US soldiers killed in Iran war  Reuters</div>
+            <div class="news-source">📰 Reuters - 22.07.2026</div>
+        </div><div class="news-item">
+            <div class="news-title">Senate panel advances China auto bill that could bar Mercedes-Benz from U.S.</div>
+            <div class="news-desc">Mercedes-Benz’s largest individual shareholder is Chinese state-owned BAIC. Cruz warned the bill could hurt Mercedes and accused GM of backing it.</div>
+            <div class="news-source">📰 CNBC - 22.07.2026</div>
+        </div><div class="news-item">
+            <div class="news-title">Amazon cuts some jobs in its artificial general intelligence unit</div>
+            <div class="news-desc">Amazon's AGI unit has released a set of AI models, called Nova, and also includes groups working on silicon and quantum computing.</div>
+            <div class="news-source">📰 CNBC - 22.07.2026</div>
+        </div><div class="news-item">
+            <div class="news-title">More ships change course in Red Sea after Houthi threats, data shows - Reuters</div>
+            <div class="news-desc">More ships change course in Red Sea after Houthi threats, data shows  Reuters</div>
+            <div class="news-source">📰 Reuters - 22.07.2026</div>
+        </div><div class="news-item">
+            <div class="news-title">Ex-Google recruiter: The No. 1 question that makes me want to hire someone on the spot</div>
+            <div class="news-desc">Former Google recruiter Farah Sharghi reveals the question that makes job candidates stand out to her the most.</div>
+            <div class="news-source">📰 CNBC - 22.07.2026</div>
+        </div><div class="news-item">
+            <div class="news-title">Under-the-radar beverage name captures trader's attention</div>
+            <div class="news-desc">Michael Khouw breaks down how he's trading this stock ahead of earnings.</div>
+            <div class="news-source">📰 CNBC - 22.07.2026</div>
+        </div>
+</div>
+
+<div class="tab-content">
+<div class="header">
+<h1>📈 Marktprognose</h1>
+<div class="date">für 22.07.2026</div>
+</div>
+<div class="sector"><div class="sector-header">🟢 BUY-Signale (11)</div><div class="prognose-item sig-buy">
+        <strong>🟢 Goldman Sachs — BUY</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • Momentum -4.6% • 3 relevante News</span>
+    </div><div class="prognose-item sig-buy">
+        <strong>🟢 JP Morgan — BUY</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • 3 relevante News</span>
+    </div><div class="prognose-item sig-buy">
+        <strong>🟢 Palantir — BUY</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • Momentum -7.3% • 3 relevante News</span>
+    </div><div class="prognose-item sig-buy">
+        <strong>🟢 Microsoft — BUY</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • 3 relevante News</span>
+    </div><div class="prognose-item sig-buy">
+        <strong>🟢 UnitedHealth — BUY</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • 3 relevante News</span>
+    </div><div class="prognose-item sig-buy">
+        <strong>🟢 Nebius AI — BUY</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • Momentum +10.8% • 3 relevante News</span>
+    </div><div class="prognose-item sig-buy">
+        <strong>🟢 Meta — BUY</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • Momentum -8.1% • 3 relevante News</span>
+    </div><div class="prognose-item sig-buy">
+        <strong>🟢 Caterpillar — BUY</strong><br>
+        <span style="font-size:11px;color:#aaa;">RSI überverkauft (28.4) • Abwärtstrend • 3 relevante News</span>
+    </div><div class="prognose-item sig-buy">
+        <strong>🟢 Mastercard — BUY</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • 3 relevante News</span>
+    </div><div class="prognose-item sig-buy">
+        <strong>🟢 Oracle — BUY</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • Momentum -4.9% • 3 relevante News</span>
+    </div><div class="prognose-item sig-buy">
+        <strong>🟢 Amazon — BUY</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • Momentum -4.0% • 3 relevante News</span>
+    </div></div><div class="sector"><div class="sector-header">🔴 SELL-Signale (0)</div><div class="loading">Keine SELL-Signale heute</div></div><div class="sector"><div class="sector-header">🟡 HOLD (31)</div><div class="prognose-item sig-hold">
+        <strong>🟡 Cloudflare — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • 2 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Sandisk — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • 3 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 ASML — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • 3 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Hensoldt — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • Momentum +4.7%</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Cisco Systems — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • 3 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Apple — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">RSI überkauft (74.4) • Aufwärtstrend • 3 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Lockheed Martin — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • 3 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Nike — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • 1 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Intel — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • 3 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Exxon Mobil — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">RSI überkauft (81.3) • Aufwärtstrend • Momentum +6.9% • 3 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Thyssenkrupp — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 MSCI World — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 S&P 500 — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Nvidia — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 BASF — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Tesla — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • Momentum -5.0% • 3 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Zeta Global — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • Momentum -10.6% • 1 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Rheinmetall — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • Momentum +3.2%</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Pan American Silver — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • Momentum +3.4%</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 PayPal — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">RSI überkauft (81.6) • Aufwärtstrend • 3 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 SAP — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • Momentum -5.1% • 2 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Moderna — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • Momentum -15.3% • 3 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Alphabet — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • Momentum -6.9% • 2 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Novo Nordisk — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Aufwärtstrend • Momentum -4.9% • 3 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Astronics — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Siemens Energy — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Siemens — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Northrop Grumman — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • 2 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Rolls Royce — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • 2 relevante News</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 BYD — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">RSI überkauft (72.1) • Aufwärtstrend</span>
+    </div><div class="prognose-item sig-hold">
+        <strong>🟡 Droneshield — HOLD</strong><br>
+        <span style="font-size:11px;color:#aaa;">Abwärtstrend • Momentum -8.9%</span>
+    </div></div>
+<div class="disclaimer">⚠️ Keine Anlageberatung. Automatisch generiert aus Chart- &amp; News-Daten.</div>
+</div>
+</div>
+
+<script>
+function switchTab(i) {
+  document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.tab-content')[i].classList.add('active');
+  document.querySelectorAll('.tab-btn')[i].classList.add('active');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
