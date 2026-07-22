@@ -141,6 +141,19 @@ def get_technical(ticker):
         return None
 
 
+def get_company_logo(ticker):
+    if not FINNHUB_KEY:
+        return None
+    try:
+        url = f"https://finnhub.io/api/v1/stock/profile2?symbol={ticker}&token={FINNHUB_KEY}"
+        res = requests.get(url, timeout=10)
+        data = res.json()
+        logo = data.get('logo')
+        return logo if logo else None
+    except Exception:
+        return None
+
+
 def get_general_news(target_date_str):
     if not FINNHUB_KEY:
         return []
@@ -231,6 +244,9 @@ for ticker, (name, sector, currency) in STOCKS.items():
 
     signal, icon, score = build_signal(tech, news_score)
 
+    logo = get_company_logo(ticker) if tech else None
+    time.sleep(0.2)
+
     results[name] = {
         'ticker': ticker,
         'sector': sector,
@@ -241,6 +257,7 @@ for ticker, (name, sector, currency) in STOCKS.items():
         'signal': signal,
         'icon': icon,
         'score': score,
+        'logo': logo,
     }
     if tech:
         print(f"✅ {name}: {tech['price']}{currency} {tech['change']:+.1f}% -> {icon} {signal}")
@@ -252,14 +269,27 @@ general_news = get_general_news(data_date_global or today_str)
 
 # ---- HTML generieren ----
 
+def logo_html(name, d):
+    initial = name[0].upper()
+    if d.get('logo'):
+        return (f'<img class="stock-logo" src="{d["logo"]}" alt="{name}" '
+                f'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">'
+                f'<div class="stock-logo-placeholder" style="display:none;">{initial}</div>')
+    return f'<div class="stock-logo-placeholder">{initial}</div>'
+
+
 def stock_row(name, d):
+    logo = logo_html(name, d)
     if not d['tech']:
-        return f'<div class="stock-item"><div>{name}</div><div>⚪ n/a</div></div>'
+        return f'''<div class="stock-item">
+            <div class="stock-left">{logo}<div class="stock-name">{name}</div></div>
+            <div>⚪ n/a</div>
+        </div>'''
     t = d['tech']
     color = 'positive' if t['change'] >= 0 else 'negative'
     arrow = '↑' if t['change'] >= 0 else '↓'
     return f'''<div class="stock-item">
-        <div class="stock-name">{name}</div>
+        <div class="stock-left">{logo}<div class="stock-name">{name}</div></div>
         <div class="stock-data">
             <div class="price {color}">{t['price']}{d['currency']} {arrow} {abs(t['change'])}%</div>
             <div class="signal-badge sig-{d['signal'].lower()}">{d['icon']} {d['signal']}</div>
@@ -349,7 +379,10 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
 .sector-header {{ background:rgba(255,255,255,0.08); padding:12px 14px; font-weight:600; font-size:14px; }}
 .stock-item {{ padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center; }}
 .stock-item:last-child {{ border-bottom:none; }}
-.stock-name {{ font-weight:600; font-size:14px; }}
+.stock-left {{ display:flex; align-items:center; gap:10px; min-width:0; }}
+.stock-logo {{ width:28px; height:28px; border-radius:7px; object-fit:contain; background:#fff; padding:3px; flex-shrink:0; }}
+.stock-logo-placeholder {{ width:28px; height:28px; border-radius:7px; background:rgba(16,185,129,0.15); color:#10b981; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }}
+.stock-name {{ font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }}
 .stock-data {{ text-align:right; }}
 .price {{ font-weight:bold; font-size:14px; }}
 .positive {{ color:#10b981; }}
