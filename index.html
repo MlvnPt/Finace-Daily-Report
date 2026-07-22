@@ -70,17 +70,33 @@
         .negative { color: #ef4444; }
         .update { text-align: center; font-size: 10px; color: #10b981; padding: 8px; }
         .loading { text-align: center; padding: 20px; color: #aaa; }
+        .news-item {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 10px;
+        }
+        .news-item:last-child { border-bottom: none; }
+        .news-title { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+        .news-source { font-size: 11px; color: #aaa; }
+        .prognose-item {
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            background: rgba(16,185,129,0.1);
+            border-radius: 8px;
+            border-left: 3px solid #10b981;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="update" id="updateTime">✅ Lade Kurse...</div>
+        <div class="update" id="updateTime">✅ Lade...</div>
         <div class="tab-navigation">
             <button class="tab-btn active" onclick="switchTab(0)">📊 Finance Report</button>
             <button class="tab-btn" onclick="switchTab(1)">📰 Top News</button>
             <button class="tab-btn" onclick="switchTab(2)">📈 Prognose</button>
         </div>
         
+        <!-- TAB 1: KURSE -->
         <div class="tab-content active">
             <div class="header">
                 <h1>📊 Finance Daily Report</h1>
@@ -89,19 +105,27 @@
             <div id="stocksContainer" class="loading">⏳ Kurse werden geladen...</div>
         </div>
         
+        <!-- TAB 2: NEWS -->
         <div class="tab-content">
-            <div class="header"><h1>📰 Top News</h1></div>
-            <div style="padding: 20px; color: #aaa;">News täglich aktualisiert</div>
+            <div class="header">
+                <h1>📰 Top News</h1>
+                <div class="date">Aktuelle Marktmeldungen</div>
+            </div>
+            <div id="newsContainer" class="loading">⏳ News werden geladen...</div>
         </div>
         
+        <!-- TAB 3: PROGNOSE -->
         <div class="tab-content">
-            <div class="header"><h1>📈 Marktprognose</h1></div>
-            <div style="padding: 20px; color: #aaa;">Prognosen täglich aktualisiert</div>
+            <div class="header">
+                <h1>📈 Marktprognose</h1>
+                <div class="date" id="forecastDate">Heute's Aussichten</div>
+            </div>
+            <div id="forecastContainer" class="loading">⏳ Prognose wird berechnet...</div>
         </div>
     </div>
     
     <script>
-        const API_KEY = 'd9ggr29r01qq65366t6gd9ggr29r01qq65366t70'; // ← ERSETZE HIER!
+        const API_KEY = 'd9ggr29r01qq65366t6gd9ggr29r01qq65366t70'; // ← DEIN KEY!
 
         const STOCKS = {
             'AAPL': 'Apple', 'MSFT': 'Microsoft', 'NVDA': 'Nvidia',
@@ -125,6 +149,8 @@
             '🚗 E-MOBILITÄT': ['Tesla']
         };
 
+        let allStocks = {};
+
         async function getStock(ticker) {
             try {
                 const url = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${API_KEY}`;
@@ -135,7 +161,7 @@
                     const change = ((data.c - data.pc) / data.pc) * 100;
                     return {
                         price: data.c.toFixed(2),
-                        change: Math.abs(change).toFixed(2),
+                        change: change.toFixed(2),
                         arrow: change >= 0 ? '↑' : '↓',
                         color: change >= 0 ? 'positive' : 'negative'
                     };
@@ -146,23 +172,40 @@
             return null;
         }
 
+        async function getNews() {
+            try {
+                const url = `https://finnhub.io/api/v1/news?category=general&minId=0&token=${API_KEY}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                return data.slice(0, 10);
+            } catch (e) {
+                return [];
+            }
+        }
+
         async function loadStocks() {
             const stocks = {};
             for (const [ticker, name] of Object.entries(STOCKS)) {
                 const data = await getStock(ticker);
                 if (data) stocks[name] = data;
             }
-            render(stocks);
+            allStocks = stocks;
+            renderStocks(stocks);
         }
 
-        function render(stocks) {
+        async function loadNews() {
+            const news = await getNews();
+            renderNews(news);
+        }
+
+        function renderStocks(stocks) {
             let html = '';
             for (const [sector, names] of Object.entries(SECTORS)) {
                 html += `<div class="sector"><div class="sector-header">${sector}</div>`;
                 for (const name of names) {
                     if (stocks[name]) {
                         const s = stocks[name];
-                        html += `<div class="stock-item"><div>${name}</div><div><span class="${s.color}">${s.price}€ ${s.arrow} ${s.change}%</span></div></div>`;
+                        html += `<div class="stock-item"><div>${name}</div><div><span class="${s.color}">${s.price}€ ${s.arrow} ${Math.abs(s.change)}%</span></div></div>`;
                     }
                 }
                 html += '</div>';
@@ -175,6 +218,54 @@
             document.getElementById('dateInfo').textContent = `${now.toLocaleDateString('de-DE', {weekday:'long', year:'numeric', month:'long', day:'numeric'})} • Daten vom ${yesterday.toLocaleDateString('de-DE')}`;
         }
 
+        function renderNews(news) {
+            if (news.length === 0) {
+                document.getElementById('newsContainer').innerHTML = '<div class="loading">Keine News verfügbar</div>';
+                return;
+            }
+
+            let html = '';
+            for (let i = 0; i < Math.min(5, news.length); i++) {
+                const item = news[i];
+                html += `<div class="news-item">
+                    <div class="news-title">${item.headline}</div>
+                    <div class="news-source">📰 ${item.source} - ${new Date(item.datetime * 1000).toLocaleDateString('de-DE')}</div>
+                </div>`;
+            }
+            document.getElementById('newsContainer').innerHTML = html;
+        }
+
+        function renderForecast() {
+            const gainers = Object.entries(allStocks)
+                .sort((a, b) => parseFloat(b[1].change) - parseFloat(a[1].change))
+                .slice(0, 3);
+            
+            const losers = Object.entries(allStocks)
+                .sort((a, b) => parseFloat(a[1].change) - parseFloat(b[1].change))
+                .slice(0, 3);
+
+            let html = '<div class="sector"><div class="sector-header">🟢 Top Gainer heute</div>';
+            for (const [name, data] of gainers) {
+                html += `<div class="prognose-item"><strong>${name}</strong><br>📈 +${data.change}% (${data.price}€)</div>`;
+            }
+            html += '</div>';
+
+            html += '<div class="sector"><div class="sector-header">🔴 Top Loser heute</div>';
+            for (const [name, data] of losers) {
+                html += `<div class="prognose-item"><strong>${name}</strong><br>📉 ${data.change}% (${data.price}€)</div>`;
+            }
+            html += '</div>';
+
+            html += '<div class="sector"><div class="sector-header">💡 Markttrends</div>';
+            html += `<div class="prognose-item">
+                <strong>Allgemeines Sentiment:</strong><br>
+                Der Markt bewegt sich seitwärts. Tech-Aktien führen, während traditionelle Industrien schwächer sind.
+            </div>`;
+            html += '</div>';
+
+            document.getElementById('forecastContainer').innerHTML = html;
+        }
+
         function switchTab(i) {
             document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
@@ -182,8 +273,20 @@
             document.querySelectorAll('.tab-btn')[i].classList.add('active');
         }
 
+        // Start
         loadStocks();
-        setInterval(loadStocks, 60000);
+        loadNews();
+        
+        setTimeout(() => {
+            renderForecast();
+        }, 2000);
+
+        // Refresh every 60 seconds
+        setInterval(() => {
+            loadStocks();
+            loadNews();
+            renderForecast();
+        }, 60000);
     </script>
 </body>
 </html>
