@@ -141,7 +141,25 @@ def get_technical(ticker):
         return None
 
 
+# Manuelle Domain-Zuordnung fuer Ticker, die bei Finnhub kein Logo haben
+# (v.a. europaeische Boersen & Indizes) -> Fallback ueber Google Favicon-Service
+MANUAL_LOGO_DOMAINS = {
+    'HAG.DE': 'hensoldt.net',
+    'RHM.DE': 'rheinmetall.com',
+    'DRO.AX': 'droneshield.com',
+    'ENR.DE': 'siemens-energy.com',
+    'SIE.DE': 'siemens.com',
+    'TKA.DE': 'thyssenkrupp.com',
+    'BAS.DE': 'basf.com',
+    'URTH': 'ishares.com',
+    '^GSPC': 'spglobal.com',
+}
+
+
 def get_company_logo(ticker):
+    if ticker in MANUAL_LOGO_DOMAINS:
+        domain = MANUAL_LOGO_DOMAINS[ticker]
+        return f'https://www.google.com/s2/favicons?domain={domain}&sz=128'
     if not FINNHUB_KEY:
         return None
     try:
