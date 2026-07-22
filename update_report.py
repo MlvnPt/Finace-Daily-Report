@@ -149,7 +149,7 @@ MANUAL_LOGO_DOMAINS = {
     'DRO.AX': 'droneshield.com',
     'ENR.DE': 'siemens-energy.com',
     'SIE.DE': 'siemens.com',
-    'TKA.DE': 'thyssenkrupp.com',
+    'TKA.DE': 'www.thyssenkrupp.com',
     'BAS.DE': 'basf.com',
     'URTH': 'ishares.com',
     '^GSPC': 'spglobal.com',
