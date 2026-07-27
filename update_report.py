@@ -344,6 +344,36 @@ def match_stock_for_news(headline, summary):
     return None, None
 
 
+def momentum_label(t):
+    if t['momentum'] > 5:
+        return '🚀 STARK'
+    elif t['momentum'] > 2:
+        return '📈 STARKER AUFWÄRTSTREND'
+    elif t['momentum'] < -5:
+        return '⚠️ SCHWACH'
+    elif t['momentum'] < -2:
+        return '📉 ABWÄRTSTREND'
+    else:
+        return '➡️ SEITWÄRTS'
+
+
+def why_it_matters_bullets(d):
+    """Echte Bulletpoints aus technischen Werten + News-Treffern, kein erfundener Text."""
+    t = d['tech']
+    bullets = []
+    if t:
+        bullets.append('Aufwärtstrend (SMA5 über SMA20)' if t['trend_up'] else 'Abwärtstrend (SMA5 unter SMA20)')
+        if t['rsi'] < 30:
+            bullets.append(f"RSI überverkauft ({t['rsi']}) — technische Erholung möglich")
+        elif t['rsi'] > 70:
+            bullets.append(f"RSI überkauft ({t['rsi']}) — Korrektur möglich")
+        if abs(t['momentum']) > 3:
+            bullets.append(f"5-Tage-Momentum {t['momentum']:+.1f}%")
+    if d['news_reasons']:
+        bullets.append(f"{len(d['news_reasons'])} weitere relevante News mit Sentiment-Signal")
+    return bullets
+
+
 def build_news_card(a):
     headline = a.get('headline', '')
     summary = (a.get('summary', '') or '').strip()
@@ -353,20 +383,24 @@ def build_news_card(a):
     dot = {'positive': '🟢', 'negative': '🔴', 'neutral': '🟡'}[sentiment]
 
     match_name, match_d = match_stock_for_news(headline, summary)
-    body = ''
+
     if match_name and match_d:
         t = match_d['tech']
         arrow = '↑' if t['change'] >= 0 else '↓'
-        color = 'positive' if t['change'] >= 0 else 'negative'
-        body += (f'<strong>Ticker:</strong> {match_d["ticker"]} | Aktuell: '
-                  f'<span class="{color}">{arrow} {abs(t["change"])}%</span> auf {t["price"]}{match_d["currency"]}<br><br>')
-    if summary:
-        body += f'<strong>Zusammenfassung:</strong> {summary}<br><br>'
-    body += f'<span style="color:#888;font-size:11px;">🗞️ {source} &middot; {d_str}</span>'
+        bullets = why_it_matters_bullets(match_d)
+        bullets_html = ''.join([f'• {b}<br>' for b in bullets]) if bullets else ''
+        body = f'''<strong>Ticker:</strong> {match_d['ticker']} | Aktuell: {arrow} {abs(t['change'])}% auf {t['price']}{match_d['currency']}<br><br>
+            <strong>Die Story:</strong> {summary or headline}<br><br>
+            <strong>Was bedeutet das?</strong><br>
+            {bullets_html}<br>
+            <strong>Analyst Rating: {match_d['signal']}</strong><br>
+            <strong>Momentum:</strong> {momentum_label(t)}'''
+    else:
+        body = f'<strong>Die Story:</strong> {summary or headline}<br><br><span style="color:#888;font-size:12px;">🗞️ {source} &middot; {d_str}</span>'
 
-    return f'''<div class="news-card">
-        <div class="news-card-header">{dot} {headline}</div>
-        <div class="news-card-body">{body}</div>
+    return f'''<div class="news-section">
+        <div class="news-header">{dot} {headline}</div>
+        <div class="news-item" style="margin-top: 8px;">{body}</div>
     </div>'''
 
 
@@ -374,6 +408,10 @@ news_html = ''
 if general_news:
     for a in general_news:
         news_html += build_news_card(a)
+    news_html += f'''<div class="footer">
+        ✅ Nachrichten vom {data_date_global or today_str} &middot; 📊 Datenquelle: Finnhub<br>
+        ⚠️ Disclaimer: Keine Anlageberatung | Informationszwecke
+    </div>'''
 else:
     news_html = '<div class="loading">Keine News für diesen Tag verfügbar</div>'
 
@@ -420,13 +458,10 @@ def reason_bullets(d):
 
 
 def candidate_block(rank, name, d, arrow_icon):
-    t = d['tech']
     bullets = reason_bullets(d)
     bullets_html = ''.join([f'{b}<br>' for b in bullets]) if bullets else 'Neutrale Datenlage<br>'
-    return f'''<div class="prognose-line">
-        <strong>{rank}. {name} ({d['ticker']})</strong> &rarr; Signal-Score: {d['score']:+.1f}<br>
-        <span class="prognose-reason">{arrow_icon} {bullets_html}</span>
-    </div>'''
+    return f'''<strong>{rank}. {name} ({d['ticker']})</strong> &rarr; Signal-Score: {d['score']:+.1f}<br>
+        {arrow_icon} {bullets_html}<br>'''
 
 
 # ---- TAB 3 SEKTION 1: Markt-Sentiment ----
@@ -438,9 +473,9 @@ if bottom_sector:
 sentiment_reasons.append(f"{n_buy} BUY-Signale gegenüber {n_sell} SELL-Signalen")
 sentiment_bullets = ''.join([f'• {r}<br>' for r in sentiment_reasons])
 
-forecast_html = f'''<div class="news-card">
-    <div class="news-card-header">🎯 MARKT-SENTIMENT HEUTE</div>
-    <div class="news-card-body">
+forecast_html = f'''<div class="news-section">
+    <div class="news-header">🎯 MARKT-SENTIMENT HEUTE</div>
+    <div class="news-item" style="margin-top: 8px;">
         <strong>Allgemeine Stimmung:</strong> {sentiment_label}<br><br>
         <strong>Basis dieser Einschätzung:</strong><br>
         {sentiment_bullets}
@@ -450,23 +485,23 @@ forecast_html = f'''<div class="news-card">
 # ---- TAB 3 SEKTION 2: Top Gainer-Kandidaten ----
 top_gainers = buys[:5]
 if top_gainers:
-    lines = ''.join([candidate_block(i + 1, n, d, '🔥') for i, (n, d) in enumerate(top_gainers)])
+    lines = '<br>'.join([candidate_block(i + 1, n, d, '🔥') for i, (n, d) in enumerate(top_gainers)])
 else:
-    lines = '<div class="prognose-reason">Aktuell keine BUY-Kandidaten</div>'
-forecast_html += f'''<div class="news-card">
-    <div class="news-card-header">🟢 TOP GAINER-KANDIDATEN (stärkste BUY-Signale)</div>
-    <div class="news-card-body">{lines}</div>
+    lines = 'Aktuell keine BUY-Kandidaten'
+forecast_html += f'''<div class="news-section">
+    <div class="news-header">🟢 TOP GAINER-KANDIDATEN (stärkste BUY-Signale)</div>
+    <div class="news-item" style="margin-top: 8px; line-height: 1.8;">{lines}</div>
 </div>'''
 
 # ---- TAB 3 SEKTION 3: Top Loser-Kandidaten ----
 top_losers = sells[:5] if sells else sorted(holds, key=lambda x: x[1]['score'])[:3]
 if top_losers:
-    lines = ''.join([candidate_block(i + 1, n, d, '📉') for i, (n, d) in enumerate(top_losers)])
+    lines = '<br>'.join([candidate_block(i + 1, n, d, '📉') for i, (n, d) in enumerate(top_losers)])
 else:
-    lines = '<div class="prognose-reason">Aktuell keine SELL-Kandidaten</div>'
-forecast_html += f'''<div class="news-card">
-    <div class="news-card-header">🔴 TOP LOSER-KANDIDATEN (schwächste Signale)</div>
-    <div class="news-card-body">{lines}</div>
+    lines = 'Aktuell keine SELL-Kandidaten'
+forecast_html += f'''<div class="news-section">
+    <div class="news-header">🔴 TOP LOSER-KANDIDATEN (schwächste Signale)</div>
+    <div class="news-item" style="margin-top: 8px; line-height: 1.8;">{lines}</div>
 </div>'''
 
 # ---- TAB 3 SEKTION 4: Sektor-Performance kategorisiert ----
@@ -490,9 +525,9 @@ if weak:
     sector_body += '<strong style="color:#ef4444;">✗ SCHWACHE SEKTOREN (Ø &lt; -1%):</strong><br>'
     sector_body += ''.join([sector_line(t, a) for t, a in weak])
 
-forecast_html += f'''<div class="news-card">
-    <div class="news-card-header">📊 SEKTOR-PERFORMANCE (Ø letzter Handelstag)</div>
-    <div class="news-card-body">{sector_body}</div>
+forecast_html += f'''<div class="news-section">
+    <div class="news-header">📊 SEKTOR-PERFORMANCE (Ø letzter Handelstag)</div>
+    <div class="news-item" style="margin-top: 8px; line-height: 2;">{sector_body}</div>
 </div>'''
 
 # ---- TAB 3 SEKTION 5: Strategie für heute ----
@@ -502,24 +537,24 @@ sell_names = ', '.join([n for n, d in sells]) if sells else 'keine aktuell'
 watch_candidates = [(n, d) for n, d in holds if abs(d['score']) >= 1.0]
 watch_names = ', '.join([n for n, d in watch_candidates[:4]]) if watch_candidates else 'keine besonderen Grenzfälle'
 
-forecast_html += f'''<div class="news-card">
-    <div class="news-card-header">🎯 STRATEGIE FÜR HEUTE</div>
-    <div class="news-card-body">
-        <strong style="color:#10b981;">🟢 BUY (stärkste Signale):</strong><br>
+forecast_html += f'''<div class="news-section">
+    <div class="news-header">🎯 STRATEGIE FÜR HEUTE</div>
+    <div class="news-item" style="margin-top: 8px; line-height: 1.8;">
+        <strong>🟢 BUY (stärkste Signale):</strong><br>
         &rarr; {buy_names}<br><br>
-        <strong style="color:#fbbf24;">🔄 HOLD (abwarten):</strong><br>
+        <strong>🔄 HOLD (abwarten):</strong><br>
         &rarr; {hold_names}<br><br>
-        <strong style="color:#ef4444;">🔴 SELL (Signale zur Vorsicht):</strong><br>
+        <strong>🔴 SELL (Signale zur Vorsicht):</strong><br>
         &rarr; {sell_names}<br><br>
-        <strong style="color:#60a5fa;">💡 WATCH (Grenzfälle nahe der Schwelle):</strong><br>
+        <strong>💡 WATCH (Grenzfälle nahe der Schwelle):</strong><br>
         &rarr; {watch_names}
     </div>
 </div>'''
 
 # ---- TAB 3 SEKTION 6: Risiko-Warnung ----
-forecast_html += '''<div class="news-card">
-    <div class="news-card-header">🎲 RISIKO-WARNUNG</div>
-    <div class="news-card-body">
+forecast_html += '''<div class="news-section">
+    <div class="news-header">🎲 RISIKO-WARNUNG</div>
+    <div class="news-item" style="margin-top: 8px;">
         <strong>Was könnte diese Prognose kippen?</strong><br><br>
         ⚠️ Unerwartete Makrodaten (Inflation, Arbeitsmarkt, Zinsentscheide)<br>
         ⚠️ Geopolitische Eskalationen<br>
@@ -529,6 +564,12 @@ forecast_html += '''<div class="news-card">
         und einfachem News-Keyword-Matching — kein Ersatz für eigene Recherche. Immer eigenes Risikomanagement betreiben. 🎯
     </div>
 </div>'''
+
+forecast_html += f'''<div class="footer">
+    ✅ Prognose vom {today_str} morgens &middot; 📊 Basis: Yahoo Finance + Finnhub<br>
+    ⚠️ Disclaimer: Keine Anlageberatung | Informationszwecke
+</div>'''
+
 
 html = f'''<!DOCTYPE html>
 <html lang="de">
@@ -565,17 +606,12 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
 .sig-sell {{ background:rgba(239,68,68,0.2); color:#ef4444; }}
 .sig-hold {{ background:rgba(234,179,8,0.2); color:#eab308; }}
 .update {{ text-align:center; font-size:10px; color:#10b981; padding:8px; }}
-.news-card {{ background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px 16px; margin-bottom:14px; }}
-.news-card-header {{ font-weight:700; font-size:14px; color:#fff; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); line-height:1.35; }}
-.news-card-body {{ font-size:12px; color:#ccc; line-height:1.6; }}
-.news-card-meta {{ font-size:10px; color:#888; margin-top:8px; }}
-.prognose-line {{ padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); }}
-.prognose-line:last-child {{ border-bottom:none; }}
-.rating-pill {{ display:inline-block; font-size:10px; padding:2px 7px; border-radius:4px; font-weight:700; margin-right:8px; }}
-.rating-pill.buy {{ background:rgba(16,185,129,0.3); color:#10b981; }}
-.rating-pill.sell {{ background:rgba(239,68,68,0.3); color:#ef4444; }}
-.rating-pill.hold {{ background:rgba(245,158,11,0.3); color:#fbbf24; }}
-.prognose-reason {{ font-size:11px; color:#999; margin-top:3px; }}
+.news-section {{ background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px 16px; margin-bottom:16px; }}
+.news-header {{ font-weight:700; font-size:16px; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; line-height:1.35; }}
+.news-item {{ font-size:14px; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.05); line-height:1.6; }}
+.news-item:last-child {{ border-bottom:none; margin-bottom:0; }}
+.news-item strong {{ color:#10b981; }}
+.footer {{ text-align:center; font-size:12px; color:#666; margin-top:20px; padding:16px 0; }}
 .loading {{ text-align:center; padding:20px; color:#aaa; }}
 .disclaimer {{ font-size:10px; color:#666; text-align:center; padding:16px; }}
 </style>
@@ -611,7 +647,6 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
 <div class="date">für {today_str}</div>
 </div>
 {forecast_html}
-<div class="disclaimer">⚠️ Keine Anlageberatung. Automatisch generiert aus Chart- &amp; News-Daten.</div>
 </div>
 </div>
 
