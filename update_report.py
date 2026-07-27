@@ -325,17 +325,55 @@ for sector_key, sector_title in SECTORS.items():
         sectors_html += stock_row(n, d)
     sectors_html += '</div>'
 
+def classify_sentiment(text):
+    text_l = text.lower()
+    for kw in POSITIVE_KEYWORDS:
+        if kw in text_l:
+            return 'positive'
+    for kw in NEGATIVE_KEYWORDS:
+        if kw in text_l:
+            return 'negative'
+    return 'neutral'
+
+
+def match_stock_for_news(headline, summary):
+    text = (headline + ' ' + summary).lower()
+    for name, d in results.items():
+        if name.lower() in text and d['tech']:
+            return name, d
+    return None, None
+
+
+def build_news_card(a):
+    headline = a.get('headline', '')
+    summary = (a.get('summary', '') or '').strip()
+    source = a.get('source', '')
+    d_str = datetime.fromtimestamp(a['datetime']).strftime('%d.%m.%Y')
+    sentiment = classify_sentiment(headline + ' ' + summary)
+    dot = {'positive': '🟢', 'negative': '🔴', 'neutral': '🟡'}[sentiment]
+
+    match_name, match_d = match_stock_for_news(headline, summary)
+    body = ''
+    if match_name and match_d:
+        t = match_d['tech']
+        arrow = '↑' if t['change'] >= 0 else '↓'
+        color = 'positive' if t['change'] >= 0 else 'negative'
+        body += (f'<strong>Ticker:</strong> {match_d["ticker"]} | Aktuell: '
+                  f'<span class="{color}">{arrow} {abs(t["change"])}%</span> auf {t["price"]}{match_d["currency"]}<br><br>')
+    if summary:
+        body += f'<strong>Zusammenfassung:</strong> {summary}<br><br>'
+    body += f'<span style="color:#888;font-size:11px;">🗞️ {source} &middot; {d_str}</span>'
+
+    return f'''<div class="news-card">
+        <div class="news-card-header">{dot} {headline}</div>
+        <div class="news-card-body">{body}</div>
+    </div>'''
+
+
 news_html = ''
 if general_news:
     for a in general_news:
-        d = datetime.fromtimestamp(a['datetime']).strftime('%d.%m.%Y')
-        summary = (a.get('summary', '') or '')[:220]
-        news_html += f'''<div class="news-card">
-            <div class="news-card-header">📰 {a.get('headline', '')}</div>
-            <div class="news-card-body">{summary}
-                <div class="news-card-meta">🗞️ {a.get('source', '')} &middot; {d}</div>
-            </div>
-        </div>'''
+        news_html += build_news_card(a)
 else:
     news_html = '<div class="loading">Keine News für diesen Tag verfügbar</div>'
 
@@ -354,69 +392,141 @@ elif avg_score < -0.7:
 else:
     sentiment_label = '➡️ NEUTRAL / GEMISCHT'
 
-
-def forecast_line(name, d):
-    t = d['tech']
-    reasons = []
-    if t:
-        if t['rsi'] < 30:
-            reasons.append(f"RSI überverkauft ({t['rsi']})")
-        elif t['rsi'] > 70:
-            reasons.append(f"RSI überkauft ({t['rsi']})")
-        reasons.append("Aufwärtstrend" if t['trend_up'] else "Abwärtstrend")
-        if abs(t['momentum']) > 3:
-            reasons.append(f"Momentum {t['momentum']:+.1f}%")
-    if d['news_reasons']:
-        reasons.append(f"{len(d['news_reasons'])} relevante News")
-    reason_str = ' • '.join(reasons) if reasons else 'Neutrale Datenlage'
-    return f'''<div class="prognose-line">
-        <span class="rating-pill {d['signal'].lower()}">{d['icon']} {d['signal']}</span><strong>{name}</strong>
-        <div class="prognose-reason">{reason_str}</div>
-    </div>'''
-
-
-def forecast_section(title, items):
-    if not items:
-        return (f'<div class="news-card"><div class="news-card-header">{title}</div>'
-                f'<div class="news-card-body" style="color:#888;">Keine Signale in dieser Kategorie</div></div>')
-    lines = ''.join([forecast_line(n, d) for n, d in items])
-    return f'<div class="news-card"><div class="news-card-header">{title}</div><div class="news-card-body">{lines}</div></div>'
-
-
-forecast_html = f'''<div class="news-card">
-    <div class="news-card-header">🎯 Markt-Sentiment für {today_str}</div>
-    <div class="news-card-body">
-        <strong style="color:#10b981;">{n_buy} BUY</strong> &middot; <strong style="color:#fbbf24;">{n_hold} HOLD</strong> &middot; <strong style="color:#ef4444;">{n_sell} SELL</strong><br>
-        Gesamtstimmung: {sentiment_label}
-    </div>
-</div>'''
-
-forecast_html += forecast_section(f'🟢 BUY-Signale ({n_buy})', buys)
-forecast_html += forecast_section(f'🔴 SELL-Signale ({n_sell})', sells)
-forecast_html += forecast_section(f'🟡 HOLD ({n_hold})', holds)
-
 sector_perf = {}
 for sector_key, sector_title in SECTORS.items():
     changes = [d['tech']['change'] for n, d in results.items() if d['sector'] == sector_key and d['tech']]
     if changes:
         sector_perf[sector_title] = sum(changes) / len(changes)
+sector_sorted = sorted(sector_perf.items(), key=lambda x: x[1], reverse=True)
+top_sector = sector_sorted[0] if sector_sorted else None
+bottom_sector = sector_sorted[-1] if sector_sorted else None
 
-sector_lines = ''
-for title, avg in sorted(sector_perf.items(), key=lambda x: x[1], reverse=True):
-    arrow = '↑' if avg >= 0 else '↓'
-    color = '#10b981' if avg >= 0 else '#ef4444'
-    sector_lines += (f'<div class="prognose-line"><strong>{title}</strong> '
-                      f'<span style="color:{color};">{arrow} {avg:+.1f}%</span></div>')
 
-forecast_html += (f'<div class="news-card"><div class="news-card-header">📊 Sektor-Performance '
-                   f'(Ø letzter Handelstag)</div><div class="news-card-body">{sector_lines}</div></div>')
+def reason_bullets(d):
+    """Baut die Begründungs-Bulletpoints aus echten technischen + News-Werten."""
+    t = d['tech']
+    bullets = []
+    if t:
+        bullets.append('Aufwärtstrend (SMA5 > SMA20)' if t['trend_up'] else 'Abwärtstrend (SMA5 < SMA20)')
+        if t['rsi'] < 30:
+            bullets.append(f"RSI überverkauft ({t['rsi']}) — technische Erholung möglich")
+        elif t['rsi'] > 70:
+            bullets.append(f"RSI überkauft ({t['rsi']}) — Korrektur möglich")
+        if abs(t['momentum']) > 3:
+            bullets.append(f"5-Tage-Momentum {t['momentum']:+.1f}%")
+    if d['news_reasons']:
+        bullets.append(f"{len(d['news_reasons'])} relevante News mit Sentiment-Signal")
+    return bullets
 
-forecast_html += '''<div class="news-card">
-    <div class="news-card-header">🎲 Risiko-Hinweis</div>
+
+def candidate_block(rank, name, d, arrow_icon):
+    t = d['tech']
+    bullets = reason_bullets(d)
+    bullets_html = ''.join([f'{b}<br>' for b in bullets]) if bullets else 'Neutrale Datenlage<br>'
+    return f'''<div class="prognose-line">
+        <strong>{rank}. {name} ({d['ticker']})</strong> &rarr; Signal-Score: {d['score']:+.1f}<br>
+        <span class="prognose-reason">{arrow_icon} {bullets_html}</span>
+    </div>'''
+
+
+# ---- TAB 3 SEKTION 1: Markt-Sentiment ----
+sentiment_reasons = []
+if top_sector:
+    sentiment_reasons.append(f"Stärkster Sektor: {top_sector[0]} ({top_sector[1]:+.1f}% Ø)")
+if bottom_sector:
+    sentiment_reasons.append(f"Schwächster Sektor: {bottom_sector[0]} ({bottom_sector[1]:+.1f}% Ø)")
+sentiment_reasons.append(f"{n_buy} BUY-Signale gegenüber {n_sell} SELL-Signalen")
+sentiment_bullets = ''.join([f'• {r}<br>' for r in sentiment_reasons])
+
+forecast_html = f'''<div class="news-card">
+    <div class="news-card-header">🎯 MARKT-SENTIMENT HEUTE</div>
     <div class="news-card-body">
-        Diese Prognose basiert auf technischen Indikatoren (RSI, Trend, Momentum) und einfachem
-        News-Keyword-Matching. Unerwartete Ereignisse (Geopolitik, Makrodaten, Gewinnüberraschungen)
-        können jede Einschätzung kurzfristig überholen.
+        <strong>Allgemeine Stimmung:</strong> {sentiment_label}<br><br>
+        <strong>Basis dieser Einschätzung:</strong><br>
+        {sentiment_bullets}
+    </div>
+</div>'''
+
+# ---- TAB 3 SEKTION 2: Top Gainer-Kandidaten ----
+top_gainers = buys[:5]
+if top_gainers:
+    lines = ''.join([candidate_block(i + 1, n, d, '🔥') for i, (n, d) in enumerate(top_gainers)])
+else:
+    lines = '<div class="prognose-reason">Aktuell keine BUY-Kandidaten</div>'
+forecast_html += f'''<div class="news-card">
+    <div class="news-card-header">🟢 TOP GAINER-KANDIDATEN (stärkste BUY-Signale)</div>
+    <div class="news-card-body">{lines}</div>
+</div>'''
+
+# ---- TAB 3 SEKTION 3: Top Loser-Kandidaten ----
+top_losers = sells[:5] if sells else sorted(holds, key=lambda x: x[1]['score'])[:3]
+if top_losers:
+    lines = ''.join([candidate_block(i + 1, n, d, '📉') for i, (n, d) in enumerate(top_losers)])
+else:
+    lines = '<div class="prognose-reason">Aktuell keine SELL-Kandidaten</div>'
+forecast_html += f'''<div class="news-card">
+    <div class="news-card-header">🔴 TOP LOSER-KANDIDATEN (schwächste Signale)</div>
+    <div class="news-card-body">{lines}</div>
+</div>'''
+
+# ---- TAB 3 SEKTION 4: Sektor-Performance kategorisiert ----
+strong = [(t, a) for t, a in sector_sorted if a > 1]
+neutral = [(t, a) for t, a in sector_sorted if -1 <= a <= 1]
+weak = [(t, a) for t, a in sector_sorted if a < -1]
+
+
+def sector_line(title, avg):
+    return f'{title}: {avg:+.1f}% Ø<br>'
+
+
+sector_body = ''
+if strong:
+    sector_body += '<strong style="color:#10b981;">✓ STARKE SEKTOREN (Ø &gt; +1%):</strong><br>'
+    sector_body += ''.join([sector_line(t, a) for t, a in strong]) + '<br>'
+if neutral:
+    sector_body += '<strong style="color:#fbbf24;">⚠️ NEUTRALE SEKTOREN (-1% bis +1%):</strong><br>'
+    sector_body += ''.join([sector_line(t, a) for t, a in neutral]) + '<br>'
+if weak:
+    sector_body += '<strong style="color:#ef4444;">✗ SCHWACHE SEKTOREN (Ø &lt; -1%):</strong><br>'
+    sector_body += ''.join([sector_line(t, a) for t, a in weak])
+
+forecast_html += f'''<div class="news-card">
+    <div class="news-card-header">📊 SEKTOR-PERFORMANCE (Ø letzter Handelstag)</div>
+    <div class="news-card-body">{sector_body}</div>
+</div>'''
+
+# ---- TAB 3 SEKTION 5: Strategie für heute ----
+buy_names = ', '.join([n for n, d in buys[:4]]) if buys else 'keine aktuell'
+hold_names = ', '.join([n for n, d in holds[:4]]) if holds else 'keine aktuell'
+sell_names = ', '.join([n for n, d in sells]) if sells else 'keine aktuell'
+watch_candidates = [(n, d) for n, d in holds if abs(d['score']) >= 1.0]
+watch_names = ', '.join([n for n, d in watch_candidates[:4]]) if watch_candidates else 'keine besonderen Grenzfälle'
+
+forecast_html += f'''<div class="news-card">
+    <div class="news-card-header">🎯 STRATEGIE FÜR HEUTE</div>
+    <div class="news-card-body">
+        <strong style="color:#10b981;">🟢 BUY (stärkste Signale):</strong><br>
+        &rarr; {buy_names}<br><br>
+        <strong style="color:#fbbf24;">🔄 HOLD (abwarten):</strong><br>
+        &rarr; {hold_names}<br><br>
+        <strong style="color:#ef4444;">🔴 SELL (Signale zur Vorsicht):</strong><br>
+        &rarr; {sell_names}<br><br>
+        <strong style="color:#60a5fa;">💡 WATCH (Grenzfälle nahe der Schwelle):</strong><br>
+        &rarr; {watch_names}
+    </div>
+</div>'''
+
+# ---- TAB 3 SEKTION 6: Risiko-Warnung ----
+forecast_html += '''<div class="news-card">
+    <div class="news-card-header">🎲 RISIKO-WARNUNG</div>
+    <div class="news-card-body">
+        <strong>Was könnte diese Prognose kippen?</strong><br><br>
+        ⚠️ Unerwartete Makrodaten (Inflation, Arbeitsmarkt, Zinsentscheide)<br>
+        ⚠️ Geopolitische Eskalationen<br>
+        ⚠️ Gewinnüberraschungen einzelner Unternehmen<br>
+        ⚠️ Plötzliche Sentiment-Wechsel an den Märkten<br><br>
+        <strong>Fazit:</strong> Diese Einschätzung basiert auf technischen Indikatoren (RSI, Trend, Momentum)
+        und einfachem News-Keyword-Matching — kein Ersatz für eigene Recherche. Immer eigenes Risikomanagement betreiben. 🎯
     </div>
 </div>'''
 
