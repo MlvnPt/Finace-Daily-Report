@@ -329,10 +329,12 @@ news_html = ''
 if general_news:
     for a in general_news:
         d = datetime.fromtimestamp(a['datetime']).strftime('%d.%m.%Y')
-        news_html += f'''<div class="news-item">
-            <div class="news-title">{a.get('headline', '')}</div>
-            <div class="news-desc">{(a.get('summary', '') or '')[:150]}</div>
-            <div class="news-source">📰 {a.get('source', '')} - {d}</div>
+        summary = (a.get('summary', '') or '')[:220]
+        news_html += f'''<div class="news-card">
+            <div class="news-card-header">📰 {a.get('headline', '')}</div>
+            <div class="news-card-body">{summary}
+                <div class="news-card-meta">🗞️ {a.get('source', '')} &middot; {d}</div>
+            </div>
         </div>'''
 else:
     news_html = '<div class="loading">Keine News für diesen Tag verfügbar</div>'
@@ -342,8 +344,18 @@ buys = [(n, d) for n, d in sorted_results if d['signal'] == 'BUY']
 sells = [(n, d) for n, d in sorted_results if d['signal'] == 'SELL']
 holds = [(n, d) for n, d in sorted_results if d['signal'] == 'HOLD']
 
+n_buy, n_sell, n_hold = len(buys), len(sells), len(holds)
+all_scores = [d['score'] for d in results.values()]
+avg_score = sum(all_scores) / len(all_scores) if all_scores else 0
+if avg_score > 0.7:
+    sentiment_label = '📈 BULLISH (überwiegend positiv)'
+elif avg_score < -0.7:
+    sentiment_label = '📉 BEARISH (überwiegend negativ)'
+else:
+    sentiment_label = '➡️ NEUTRAL / GEMISCHT'
 
-def forecast_item(name, d):
+
+def forecast_line(name, d):
     t = d['tech']
     reasons = []
     if t:
@@ -357,23 +369,56 @@ def forecast_item(name, d):
     if d['news_reasons']:
         reasons.append(f"{len(d['news_reasons'])} relevante News")
     reason_str = ' • '.join(reasons) if reasons else 'Neutrale Datenlage'
-    return f'''<div class="prognose-item sig-{d['signal'].lower()}">
-        <strong>{d['icon']} {name} — {d['signal']}</strong><br>
-        <span style="font-size:11px;color:#aaa;">{reason_str}</span>
+    return f'''<div class="prognose-line">
+        <span class="rating-pill {d['signal'].lower()}">{d['icon']} {d['signal']}</span><strong>{name}</strong>
+        <div class="prognose-reason">{reason_str}</div>
     </div>'''
 
 
-forecast_html = f'<div class="sector"><div class="sector-header">🟢 BUY-Signale ({len(buys)})</div>'
-forecast_html += ''.join([forecast_item(n, d) for n, d in buys]) if buys else '<div class="loading">Keine BUY-Signale heute</div>'
-forecast_html += '</div>'
+def forecast_section(title, items):
+    if not items:
+        return (f'<div class="news-card"><div class="news-card-header">{title}</div>'
+                f'<div class="news-card-body" style="color:#888;">Keine Signale in dieser Kategorie</div></div>')
+    lines = ''.join([forecast_line(n, d) for n, d in items])
+    return f'<div class="news-card"><div class="news-card-header">{title}</div><div class="news-card-body">{lines}</div></div>'
 
-forecast_html += f'<div class="sector"><div class="sector-header">🔴 SELL-Signale ({len(sells)})</div>'
-forecast_html += ''.join([forecast_item(n, d) for n, d in sells]) if sells else '<div class="loading">Keine SELL-Signale heute</div>'
-forecast_html += '</div>'
 
-forecast_html += f'<div class="sector"><div class="sector-header">🟡 HOLD ({len(holds)})</div>'
-forecast_html += ''.join([forecast_item(n, d) for n, d in holds])
-forecast_html += '</div>'
+forecast_html = f'''<div class="news-card">
+    <div class="news-card-header">🎯 Markt-Sentiment für {today_str}</div>
+    <div class="news-card-body">
+        <strong style="color:#10b981;">{n_buy} BUY</strong> &middot; <strong style="color:#fbbf24;">{n_hold} HOLD</strong> &middot; <strong style="color:#ef4444;">{n_sell} SELL</strong><br>
+        Gesamtstimmung: {sentiment_label}
+    </div>
+</div>'''
+
+forecast_html += forecast_section(f'🟢 BUY-Signale ({n_buy})', buys)
+forecast_html += forecast_section(f'🔴 SELL-Signale ({n_sell})', sells)
+forecast_html += forecast_section(f'🟡 HOLD ({n_hold})', holds)
+
+sector_perf = {}
+for sector_key, sector_title in SECTORS.items():
+    changes = [d['tech']['change'] for n, d in results.items() if d['sector'] == sector_key and d['tech']]
+    if changes:
+        sector_perf[sector_title] = sum(changes) / len(changes)
+
+sector_lines = ''
+for title, avg in sorted(sector_perf.items(), key=lambda x: x[1], reverse=True):
+    arrow = '↑' if avg >= 0 else '↓'
+    color = '#10b981' if avg >= 0 else '#ef4444'
+    sector_lines += (f'<div class="prognose-line"><strong>{title}</strong> '
+                      f'<span style="color:{color};">{arrow} {avg:+.1f}%</span></div>')
+
+forecast_html += (f'<div class="news-card"><div class="news-card-header">📊 Sektor-Performance '
+                   f'(Ø letzter Handelstag)</div><div class="news-card-body">{sector_lines}</div></div>')
+
+forecast_html += '''<div class="news-card">
+    <div class="news-card-header">🎲 Risiko-Hinweis</div>
+    <div class="news-card-body">
+        Diese Prognose basiert auf technischen Indikatoren (RSI, Trend, Momentum) und einfachem
+        News-Keyword-Matching. Unerwartete Ereignisse (Geopolitik, Makrodaten, Gewinnüberraschungen)
+        können jede Einschätzung kurzfristig überholen.
+    </div>
+</div>'''
 
 html = f'''<!DOCTYPE html>
 <html lang="de">
@@ -410,14 +455,17 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
 .sig-sell {{ background:rgba(239,68,68,0.2); color:#ef4444; }}
 .sig-hold {{ background:rgba(234,179,8,0.2); color:#eab308; }}
 .update {{ text-align:center; font-size:10px; color:#10b981; padding:8px; }}
-.news-item {{ padding:12px 14px; margin-bottom:10px; background:rgba(255,255,255,0.05); border-radius:8px; border-left:3px solid #10b981; }}
-.news-title {{ font-weight:600; font-size:13px; margin-bottom:4px; }}
-.news-desc {{ font-size:12px; color:#bbb; margin-bottom:6px; line-height:1.4; }}
-.news-source {{ font-size:10px; color:#888; }}
-.prognose-item {{ padding:10px 14px; margin-bottom:8px; border-radius:8px; background:rgba(255,255,255,0.04); border-left:3px solid #666; }}
-.prognose-item.sig-buy {{ border-left-color:#10b981; }}
-.prognose-item.sig-sell {{ border-left-color:#ef4444; }}
-.prognose-item.sig-hold {{ border-left-color:#eab308; }}
+.news-card {{ background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px 16px; margin-bottom:14px; }}
+.news-card-header {{ font-weight:700; font-size:14px; color:#fff; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); line-height:1.35; }}
+.news-card-body {{ font-size:12px; color:#ccc; line-height:1.6; }}
+.news-card-meta {{ font-size:10px; color:#888; margin-top:8px; }}
+.prognose-line {{ padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); }}
+.prognose-line:last-child {{ border-bottom:none; }}
+.rating-pill {{ display:inline-block; font-size:10px; padding:2px 7px; border-radius:4px; font-weight:700; margin-right:8px; }}
+.rating-pill.buy {{ background:rgba(16,185,129,0.3); color:#10b981; }}
+.rating-pill.sell {{ background:rgba(239,68,68,0.3); color:#ef4444; }}
+.rating-pill.hold {{ background:rgba(245,158,11,0.3); color:#fbbf24; }}
+.prognose-reason {{ font-size:11px; color:#999; margin-top:3px; }}
 .loading {{ text-align:center; padding:20px; color:#aaa; }}
 .disclaimer {{ font-size:10px; color:#666; text-align:center; padding:16px; }}
 </style>
