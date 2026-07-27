@@ -14,6 +14,21 @@ from datetime import datetime, timedelta
 
 FINNHUB_KEY = os.environ.get('FINNHUB_API_KEY', '')
 
+
+def translate_to_de(text):
+    """Übersetzt englischen Text nach Deutsch. Bei Fehler: Original-Text zurückgeben."""
+    if not text or not text.strip():
+        return text
+    try:
+        url = "https://translate.googleapis.com/translate_a/single"
+        params = {'client': 'gtx', 'sl': 'auto', 'tl': 'de', 'dt': 't', 'q': text}
+        res = requests.get(url, params=params, timeout=8)
+        data = res.json()
+        return ''.join([seg[0] for seg in data[0] if seg[0]])
+    except Exception as e:
+        print(f"Uebersetzung fehlgeschlagen: {e}")
+        return text
+
 # ticker -> (Anzeigename, Sektor-Key, Waehrung)
 STOCKS = {
     'HAG.DE':  ('Hensoldt', 'defense', '€'),
@@ -253,6 +268,7 @@ for ticker, (name, sector, currency) in STOCKS.items():
 
     news_score = 0
     news_reasons = []
+    articles = []
     if tech and FINNHUB_KEY and '.' not in ticker and '^' not in ticker:
         to_date = now.strftime('%Y-%m-%d')
         from_date = (now - timedelta(days=5)).strftime('%Y-%m-%d')
@@ -272,6 +288,7 @@ for ticker, (name, sector, currency) in STOCKS.items():
         'tech': tech,
         'news_score': news_score,
         'news_reasons': news_reasons,
+        'articles': articles,
         'signal': signal,
         'icon': icon,
         'score': score,
@@ -336,14 +353,6 @@ def classify_sentiment(text):
     return 'neutral'
 
 
-def match_stock_for_news(headline, summary):
-    text = (headline + ' ' + summary).lower()
-    for name, d in results.items():
-        if name.lower() in text and d['tech']:
-            return name, d
-    return None, None
-
-
 def momentum_label(t):
     if t['momentum'] > 5:
         return '🚀 STARK'
@@ -374,46 +383,77 @@ def why_it_matters_bullets(d):
     return bullets
 
 
-def build_news_card(a):
-    headline = a.get('headline', '')
-    summary = (a.get('summary', '') or '').strip()
-    source = a.get('source', '')
-    d_str = datetime.fromtimestamp(a['datetime']).strftime('%d.%m.%Y')
-    sentiment = classify_sentiment(headline + ' ' + summary)
-    dot = {'positive': '🟢', 'negative': '🔴', 'neutral': '🟡'}[sentiment]
-
-    match_name, match_d = match_stock_for_news(headline, summary)
-
-    if match_name and match_d:
-        t = match_d['tech']
-        arrow = '↑' if t['change'] >= 0 else '↓'
-        bullets = why_it_matters_bullets(match_d)
-        bullets_html = ''.join([f'• {b}<br>' for b in bullets]) if bullets else ''
-        body = f'''<strong>Ticker:</strong> {match_d['ticker']} | Aktuell: {arrow} {abs(t['change'])}% auf {t['price']}{match_d['currency']}<br><br>
-            <strong>Die Story:</strong> {summary or headline}<br><br>
-            <strong>Was bedeutet das?</strong><br>
-            {bullets_html}<br>
-            <strong>Analyst Rating: {match_d['signal']}</strong><br>
-            <strong>Momentum:</strong> {momentum_label(t)}'''
-    else:
-        body = f'<strong>Die Story:</strong> {summary or headline}<br><br><span style="color:#888;font-size:12px;">🗞️ {source} &middot; {d_str}</span>'
-
-    return f'''<div class="news-section">
-        <div class="news-header">{dot} {headline}</div>
-        <div class="news-item" style="margin-top: 8px;">{body}</div>
-    </div>'''
+def pick_representative_article(articles):
+    """Wählt den aussagekräftigsten Artikel: erst Keyword-Treffer, sonst den neuesten."""
+    for a in articles[:15]:
+        text = (a.get('headline', '') + ' ' + a.get('summary', '')).lower()
+        for kw in POSITIVE_KEYWORDS + NEGATIVE_KEYWORDS:
+            if kw in text:
+                return a
+    return articles[0] if articles else None
 
 
+# ---- TAB 2: TOP NEWS (allgemeine Marktnachrichten, uebersetzt) ----
 news_html = ''
 if general_news:
     for a in general_news:
-        news_html += build_news_card(a)
+        headline_de = translate_to_de(a.get('headline', ''))
+        summary_de = translate_to_de((a.get('summary', '') or '').strip())
+        source = a.get('source', '')
+        d_str = datetime.fromtimestamp(a['datetime']).strftime('%d.%m.%Y')
+        sentiment = classify_sentiment(a.get('headline', '') + ' ' + (a.get('summary', '') or ''))
+        dot = {'positive': '🟢', 'negative': '🔴', 'neutral': '🟡'}[sentiment]
+        body = f'<strong>Die Story:</strong> {summary_de or headline_de}<br><br><span style="color:#888;font-size:12px;">🗞️ {source} &middot; {d_str}</span>'
+        news_html += f'''<div class="news-section">
+            <div class="news-header">{dot} {headline_de}</div>
+            <div class="news-item" style="margin-top: 8px;">{body}</div>
+        </div>'''
     news_html += f'''<div class="footer">
         ✅ Nachrichten vom {data_date_global or today_str} &middot; 📊 Datenquelle: Finnhub<br>
         ⚠️ Disclaimer: Keine Anlageberatung | Informationszwecke
     </div>'''
 else:
     news_html = '<div class="loading">Keine News für diesen Tag verfügbar</div>'
+
+
+# ---- TAB 3 (NEU): AKTIEN NEWS (unternehmensspezifisch, uebersetzt) ----
+stock_news_candidates = [(n, d) for n, d in results.items() if d.get('articles') and d['tech']]
+stock_news_candidates.sort(key=lambda x: abs(x[1]['news_score']), reverse=True)
+stock_news_candidates = stock_news_candidates[:8]
+
+stock_news_html = ''
+if stock_news_candidates:
+    for name, d in stock_news_candidates:
+        article = pick_representative_article(d['articles'])
+        if not article:
+            continue
+        headline_de = translate_to_de(article.get('headline', ''))
+        summary_de = translate_to_de((article.get('summary', '') or '').strip())
+        t = d['tech']
+        arrow = '↑' if t['change'] >= 0 else '↓'
+        sentiment = classify_sentiment(article.get('headline', '') + ' ' + (article.get('summary', '') or ''))
+        dot = {'positive': '🟢', 'negative': '🔴', 'neutral': '🟡'}[sentiment]
+        bullets = why_it_matters_bullets(d)
+        bullets_html = ''.join([f'• {b}<br>' for b in bullets]) if bullets else ''
+
+        body = f'''<strong>Ticker:</strong> {d['ticker']} | Aktuell: {arrow} {abs(t['change'])}% auf {t['price']}{d['currency']}<br><br>
+            <strong>Die Story:</strong> {summary_de or headline_de}<br><br>
+            <strong>Was bedeutet das?</strong><br>
+            {bullets_html}<br>
+            <strong>Analyst Rating: {d['signal']}</strong><br>
+            <strong>Momentum:</strong> {momentum_label(t)}'''
+
+        stock_news_html += f'''<div class="news-section">
+            <div class="news-header">{dot} {name.upper()} - {headline_de}</div>
+            <div class="news-item" style="margin-top: 8px;">{body}</div>
+        </div>'''
+    stock_news_html += f'''<div class="footer">
+        ✅ Aktien-News vom {data_date_global or today_str} &middot; 📊 Datenquelle: Finnhub<br>
+        ⚠️ Disclaimer: Keine Anlageberatung | Informationszwecke
+    </div>'''
+else:
+    stock_news_html = '<div class="loading">Keine unternehmensspezifischen News verfügbar</div>'
+
 
 sorted_results = sorted(results.items(), key=lambda x: x[1]['score'], reverse=True)
 buys = [(n, d) for n, d in sorted_results if d['signal'] == 'BUY']
@@ -622,7 +662,8 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
 <div class="tab-navigation">
 <button class="tab-btn active" onclick="switchTab(0)">📊 Finance Report</button>
 <button class="tab-btn" onclick="switchTab(1)">📰 Top News</button>
-<button class="tab-btn" onclick="switchTab(2)">📈 Prognose</button>
+<button class="tab-btn" onclick="switchTab(2)">🏢 Aktien News</button>
+<button class="tab-btn" onclick="switchTab(3)">📈 Prognose</button>
 </div>
 
 <div class="tab-content active">
@@ -639,6 +680,14 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
 <div class="date">vom {data_date_global or today_str}</div>
 </div>
 {news_html}
+</div>
+
+<div class="tab-content">
+<div class="header">
+<h1>🏢 Aktien News</h1>
+<div class="date">Unternehmensspezifische Meldungen vom {data_date_global or today_str}</div>
+</div>
+{stock_news_html}
 </div>
 
 <div class="tab-content">
